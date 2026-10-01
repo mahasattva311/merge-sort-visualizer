@@ -227,6 +227,34 @@
         .hn.act { border-color: var(--act); background: color-mix(in srgb, var(--act) 28%, var(--card)); }
         .hn.out { border-color: var(--done); background: color-mix(in srgb, var(--done) 14%, var(--card)); opacity: .5; }
 
+        /* Clawd 모드: 숫자판을 머리에 얹은 Clawd(카드 이동 로직 재사용) */
+        .nc.clawd { display: block; background: none; border: 0; border-radius: 0; box-shadow: none !important; }
+        .nc.clawd svg { display: block; width: 100%; height: 100%; overflow: visible; }
+        .nc.clawd::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 80%; height: 4px; border-radius: 3px; transform: translateX(-50%); background: transparent; }
+        .nc.clawd.cmp::after { background: var(--cmp); } .nc.clawd.act::after { background: var(--act); }
+        .nc.clawd.pivot::after { background: var(--pivot); } .nc.clawd.sorted::after { background: var(--done); }
+        .nc.clawd .blk { fill: var(--card); stroke: var(--st); stroke-width: .35; }
+        .nc.clawd.cmp .blk, .nc.clawd.act .blk, .nc.clawd.pivot .blk, .nc.clawd.sorted .blk { stroke-width: .75; }
+        .nc.clawd .num { fill: var(--text); font-weight: 800; font-family: system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+        .nc.clawd .mt-bg { fill: var(--border); } .nc.clawd .mt { fill: var(--hc); }
+        .nc.clawd .eyes { transform-box: fill-box; transform-origin: 50% 50%; animation: clawdBlink 4.4s infinite; animation-delay: calc(var(--i) * -0.6s); }
+        .nc.clawd .arm, .nc.clawd .foot { transform-box: fill-box; }
+        .nc.clawd .arm.l { transform-origin: 100% 50%; } .nc.clawd .arm.r { transform-origin: 0% 50%; }
+        .nc.clawd .foot { transform-origin: 50% 0%; }
+        .nc.clawd.moving .arm.l { animation: clawdArmL var(--mdur, 300ms) ease-in-out; } .nc.clawd.moving .arm.r { animation: clawdArmR var(--mdur, 300ms) ease-in-out; }
+        .nc.clawd.moving .foot.a { animation: clawdFootA var(--mdur, 300ms) ease-in-out; } .nc.clawd.moving .foot.b { animation: clawdFootB var(--mdur, 300ms) ease-in-out; }
+        .nc.clawd.held .arm.l { transform: rotate(40deg); } .nc.clawd.held .arm.r { transform: rotate(-40deg); }
+        .nc.clawd.held svg { filter: drop-shadow(0 10px 5px rgba(20, 30, 70, .28)); }
+        .nc.clawd.held .foot.a { animation: clawdFootA 600ms ease-in-out infinite; } .nc.clawd.held .foot.b { animation: clawdFootB 600ms ease-in-out infinite; }
+        @keyframes clawdBlink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+        @keyframes clawdArmL { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(55deg); } }
+        @keyframes clawdArmR { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-55deg); } }
+        @keyframes clawdFootA { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-.7px); } 75% { transform: translateY(.3px); } }
+        @keyframes clawdFootB { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(.3px); } 75% { transform: translateY(-.7px); } }
+        .legend .note-clawd { display: none; }
+        .chart.mode-clawd ~ .legend .note-clawd { display: inline; }
+        .chart.mode-clawd ~ .legend .note-cards { display: none; }
+
         .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .8rem; color: var(--muted); }
         .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
 
@@ -314,6 +342,7 @@
             .bar, .tab, .nc { transition: none; }
             .cards.done .nc { animation: none; }
             .tn, .hn, .tree svg path { transition: none; }
+            .nc.clawd *, .nc.clawd .eyes { animation: none !important; }
         }
     </style>
 </head>
@@ -372,6 +401,7 @@
                 <span class="lbl">시각화</span>
                 <button class="btn seg" type="button" id="modeBars" aria-pressed="true">📊 막대 그래프</button>
                 <button class="btn seg" type="button" id="modeCards" aria-pressed="false">🃏 숫자 카드 (최대 20개)</button>
+                <button class="btn seg" type="button" id="modeClawd" aria-pressed="false">🦀 Clawd (최대 20개)</button>
             </div>
             <div class="chart" id="chart">
                 <div class="bars" id="bars" aria-hidden="true"></div>
@@ -389,6 +419,7 @@
                 <span id="legPivot"><i style="background:var(--pivot)"></i>피벗</span>
                 <span><i style="background:var(--done)"></i>위치 확정</span>
                 <span><i style="background:var(--bar);opacity:.3"></i>현재 작업 범위 밖</span>
+                <span class="note-clawd">머리 위 숫자판 = 값 · 위로 들어 올린 Clawd = 잠시 빼 둔 원소(임시 변수·병합 중인 값) · 살짝 올라온 Clawd = 비교 중 · 숫자판 아래 막대 = 값의 크기</span>
                 <span class="note-cards">위로 들어 올린 카드 = 잠시 빼 둔 원소(임시 변수·병합 중인 값) · 살짝 올라온 카드 = 비교 중 · 카드 아래 막대 = 값의 크기</span>
             </div>
 
@@ -1003,6 +1034,7 @@
     const PATTERN_NAME = { random: '무작위', nearly: '거의 정렬됨', reverse: '역순', sorted: '이미 정렬됨', few: '중복 많음', custom: '직접 입력' };
 
     const MAX_CARDS = 20;
+    const isCardLike = (m) => m === 'cards' || m === 'clawd'; // 숫자 카드와 Clawd는 같은 이동·개수 제한을 쓴다.
     function parseCustom(text, max = 60) {
         const parts = text.trim().split(/[\s,]+/).filter(Boolean);
         if (parts.length < 2 || parts.length > max) return { error: `숫자는 2~${max}개여야 합니다. (현재 ${parts.length}개)` };
@@ -1025,7 +1057,7 @@
     let cardEls = [], pitch = 0, cardOff = 0;
     const LIFT = 64;
     let mode = 'bars';
-    try { if (localStorage.getItem('vis-mode') === 'cards') mode = 'cards'; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
+    try { const saved = localStorage.getItem('vis-mode'); if (saved === 'cards' || saved === 'clawd') mode = saved; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
 
     const SVGNS = 'http://www.w3.org/2000/svg';
     const TREE_INFO = {
@@ -1154,9 +1186,10 @@
     function buildStage() {
         const n = state.data.length;
         maxV = Math.max(...state.data);
-        const isCards = mode === 'cards';
+        const isCards = isCardLike(mode);
         el.bars.hidden = isCards; el.cards.hidden = !isCards;
-        el.chart.classList.toggle('mode-cards', isCards);
+        el.chart.classList.toggle('mode-cards', mode === 'cards');
+        el.chart.classList.toggle('mode-clawd', mode === 'clawd');
         const w = (isCards ? el.cards : el.bars).clientWidth || 600;
         const gap = n > 40 ? 2 : n > 24 ? 3 : 5;
         const per = (w - gap * (n - 1)) / n;
@@ -1166,7 +1199,7 @@
         el.bars.innerHTML = ''; el.tags.innerHTML = ''; el.auxBars.innerHTML = ''; el.cards.innerHTML = '';
         barEls = []; tagEls = []; auxEls = []; cardEls = [];
         pitch = per + gap;
-        const cw = Math.min(per, 72), ch = Math.round(cw * 1.4);
+        const cw = Math.min(per, 72), ch = Math.round(cw * (mode === 'clawd' ? 14.2 / 13 : 1.4));
         cardOff = (per - cw) / 2;
         for (let i = 0; i < n; i++) {
             if (isCards) {
@@ -1199,9 +1232,12 @@
             for (let p = 0; p < n; p++) {
                 const v = state.data[p];
                 const e = document.createElement('div');
-                e.className = 'nc';
+                e._base = mode === 'clawd' ? 'nc clawd' : 'nc';
+                e.className = e._base;
                 e.style.cssText = `width:${cw}px;height:${ch}px;--hue:${Math.round((v / maxV) * 280)};--i:${p}`;
-                e.innerHTML = `<b class="num" style="font-size:${Math.max(13, Math.min(26, cw * 0.42))}px">${v}</b><span class="meter"><i style="width:${Math.max(6, (v / maxV) * 100)}%"></i></span>`;
+                e.innerHTML = mode === 'clawd'
+                    ? clawdSVG(v, maxV)
+                    : `<b class="num" style="font-size:${Math.max(13, Math.min(26, cw * 0.42))}px">${v}</b><span class="meter"><i style="width:${Math.max(6, (v / maxV) * 100)}%"></i></span>`;
                 e._x = null;
                 el.cards.appendChild(e);
                 cardEls.push(e);
@@ -1226,7 +1262,7 @@
         if (s.pivot >= 0) cls[s.pivot] = 'pivot';
         s.hl.act.forEach((i) => { cls[i] = 'act'; });
 
-        if (mode === 'cards') renderCards(s, cls);
+        if (isCardLike(mode)) renderCards(s, cls);
         else for (let i = 0; i < n; i++) {
             const b = barEls[i];
             b.style.height = Math.max(2, (s.arr[i] / maxV) * 100) + '%';
@@ -1257,6 +1293,26 @@
         el.play.textContent = state.playing ? '⏸ 일시정지' : state.pos === last ? '↻ 다시 재생' : '▶ 재생';
     }
 
+    // Clawd: 숫자판을 머리에 얹은 픽셀풍 마스코트(viewBox 13x14.2). 외형은 기억에 의존한 근사이며 색은 대략적인 값이다.
+    function clawdSVG(v, max) {
+        const OR = '#D97757', OD = '#B9532F', EYE = '#201511';
+        const d = String(v).length;
+        const fs = d >= 3 ? 3.6 : d === 2 ? 4.8 : 5.6;
+        const mw = Math.max(0.6, (v / max) * 8.2);
+        return `<svg viewBox="0 0 13 14.2" shape-rendering="crispEdges" aria-hidden="true">
+<g class="foot a"><rect x="3" y="11" width="1.4" height="2.8" fill="${OD}"/><rect x="5.2" y="11" width="1.4" height="2.8" fill="${OD}"/></g>
+<g class="foot b"><rect x="7.4" y="11" width="1.4" height="2.8" fill="${OD}"/><rect x="9.6" y="11" width="1.4" height="2.8" fill="${OD}"/></g>
+<g class="arm l"><rect x="0" y="7.9" width="2.4" height="2.1" fill="${OR}"/></g>
+<g class="arm r"><rect x="10.6" y="7.9" width="2.4" height="2.1" fill="${OR}"/></g>
+<rect x="2" y="6" width="9" height="5.2" fill="${OR}"/>
+<rect x="2" y="10.2" width="9" height="1" fill="${OD}" opacity=".55"/>
+<g class="eyes"><rect x="4.3" y="7.3" width="1.1" height="2.1" fill="${EYE}"/><rect x="7.6" y="7.3" width="1.1" height="2.1" fill="${EYE}"/></g>
+<rect class="blk" x="1.2" y="0.3" width="10.6" height="6.1" rx="1" />
+<rect class="mt-bg" x="2.4" y="5.1" width="8.2" height=".7" rx=".3"/><rect class="mt" x="2.4" y="5.1" width="${mw}" height=".7" rx=".3"/>
+<text class="num" x="6.5" y="${2.55 + fs * 0.36}" text-anchor="middle" font-size="${fs}">${v}</text>
+</svg>`;
+    }
+
     // 카드 모드: 자리가 바뀐 카드는 호(arc)를 그리며 이동한다. 오른쪽으로 가는 카드는 높이, 왼쪽으로 가는 카드는 낮게 지나가 서로 부딪히지 않는다.
     function renderCards(s, cls) {
         const n = s.arr.length;
@@ -1266,7 +1322,7 @@
             const e = cardEls[p], slot = s.px[p], held = s.held[p];
             const x = slot * pitch + cardOff;
             const y = held ? -LIFT : cls[slot] === 'cmp' ? -12 : 0;
-            e.className = 'nc ' + (cls[slot] || '') + (held ? ' held' : '');
+            e.className = e._base + ' ' + (cls[slot] || '') + (held ? ' held' : '');
             e.style.transform = `translate(${x}px, ${y}px)`;
             if (e._x !== null && (e._x !== x || e._y !== y) && state.mdur > 0) {
                 const dx = x - e._x, dist = Math.abs(dx) / pitch;
@@ -1288,7 +1344,7 @@
 
     // 카드 모드는 숫자가 잘 보이도록 최대 MAX_CARDS개로 제한한다.
     function applyModeLimits() {
-        const cards = mode === 'cards';
+        const cards = isCardLike(mode);
         el.size.max = cards ? MAX_CARDS : 60;
         el.sizeVal.textContent = el.size.value;
         $('customRange').textContent = cards ? `2~${MAX_CARDS}` : '2~60';
@@ -1300,9 +1356,10 @@
         try { localStorage.setItem('vis-mode', m); } catch (e) { /* 무시 */ }
         $('modeBars').setAttribute('aria-pressed', String(m === 'bars'));
         $('modeCards').setAttribute('aria-pressed', String(m === 'cards'));
+        $('modeClawd').setAttribute('aria-pressed', String(m === 'clawd'));
         applyModeLimits();
         applySpeed();
-        if (m === 'cards' && state.data.length > MAX_CARDS) {
+        if (isCardLike(m) && state.data.length > MAX_CARDS) {
             // 많으면 같은 유형으로 12개를 새로 만든다. 직접 입력한 값은 앞 20개만 남긴다.
             if (state.pattern === 'custom') { el.size.value = MAX_CARDS; setData(state.data.slice(0, MAX_CARDS), 'custom'); }
             else { el.size.value = 12; setData(generate(state.pattern, 12), state.pattern); }
@@ -1420,7 +1477,7 @@
     }
 
     // 카드 모드에서는 이동이 끝나기 전에 다음 단계로 넘어가지 않도록 이동 시간으로 상한을 둔다.
-    const curRate = () => (mode === 'cards' && state.mdur > 0 ? Math.min(state.rate, 1000 / state.mdur) : state.rate);
+    const curRate = () => (isCardLike(mode) && state.mdur > 0 ? Math.min(state.rate, 1000 / state.mdur) : state.rate);
     let raf = 0, lastT = 0, acc = 0;
     function tick(t) {
         if (!state.playing) return;
@@ -1450,6 +1507,7 @@
         const v = Number(el.speed.value);
         state.rate = 2 * Math.pow(2, v / 12);
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        document.documentElement.style.setProperty('--mdur', (reduce ? 0 : Math.round(Math.max(130, Math.min(450, 1000 / state.rate)))) + 'ms');
         state.mdur = reduce ? 0 : Math.round(Math.max(130, Math.min(450, 1000 / state.rate)));
         el.speedVal.textContent = `${Math.round(curRate())}단계/초`;
         document.documentElement.style.setProperty('--dur', reduce ? '0ms' : Math.min(180, Math.round(700 / state.rate)) + 'ms');
@@ -1473,6 +1531,7 @@
     el.speed.addEventListener('input', applySpeed);
     $('modeBars').addEventListener('click', () => setMode('bars'));
     $('modeCards').addEventListener('click', () => setMode('cards'));
+    $('modeClawd').addEventListener('click', () => setMode('clawd'));
 
     const regenerate = () => setData(generate(el.pattern.value, Number(el.size.value)), el.pattern.value);
     el.pattern.addEventListener('change', regenerate);
@@ -1481,7 +1540,7 @@
     $('shuffleBtn').addEventListener('click', regenerate);
 
     const applyCustom = () => {
-        const r = parseCustom(el.custom.value, mode === 'cards' ? MAX_CARDS : 60);
+        const r = parseCustom(el.custom.value, isCardLike(mode) ? MAX_CARDS : 60);
         if (r.error) { el.err.textContent = r.error; return; }
         el.size.value = r.nums.length;
         el.sizeVal.textContent = r.nums.length;
@@ -1513,14 +1572,15 @@
 
     $('modeBars').setAttribute('aria-pressed', String(mode === 'bars'));
     $('modeCards').setAttribute('aria-pressed', String(mode === 'cards'));
+    $('modeClawd').setAttribute('aria-pressed', String(mode === 'clawd'));
     applyModeLimits();
     applySpeed();
     const initial = ALGOS.find((a) => a.id === location.hash.slice(1));
     if (initial) state.algo = initial;
     renderTabs();
     renderCompareTable();
-    if (mode === 'cards') { el.size.value = 12; el.sizeVal.textContent = 12; }
-    setData(generate('random', mode === 'cards' ? 12 : 20), 'random');
+    if (isCardLike(mode)) { el.size.value = 12; el.sizeVal.textContent = 12; }
+    setData(generate('random', isCardLike(mode) ? 12 : 20), 'random');
 })();
 </script>
 </body>
