@@ -166,6 +166,33 @@
         .aux .bar.cmp { background: var(--cmp); }
         .aux .bar .v { display: none; }
 
+        /* ---------- Visualization mode switch / number cards ---------- */
+        .bars[hidden], .cards[hidden] { display: none; }
+        .vis-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 10px; }
+        .vis-switch .lbl { font-size: .8rem; font-weight: 700; color: var(--muted); margin-right: 2px; }
+        button.btn.seg[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+        .cards { position: relative; height: 240px; padding-top: 104px; border-bottom: 2px solid var(--border); overflow: hidden; }
+        .slot { position: absolute; bottom: 0; left: 0; border: 1.5px dashed var(--border); border-radius: 9px; opacity: .8; }
+        .nc {
+            --st: var(--border); --hc: hsl(var(--hue) 68% 55%);
+            position: absolute; bottom: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+            background: var(--card); color: var(--text); border: 2px solid var(--st); border-top: 6px solid var(--hc); border-radius: 9px;
+            box-shadow: 0 2px 6px rgba(20, 30, 70, .14); user-select: none; will-change: transform;
+            transition: opacity var(--dur) ease, border-color var(--dur) ease, box-shadow var(--dur) ease;
+        }
+        .nc .num { font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+        .nc .meter { display: block; width: 68%; height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; }
+        .nc .meter i { display: block; height: 100%; background: var(--hc); border-radius: 3px; }
+        .nc.cmp { --st: var(--cmp); } .nc.act { --st: var(--act); } .nc.pivot { --st: var(--pivot); } .nc.sorted { --st: var(--done); }
+        .nc.cmp, .nc.act, .nc.pivot, .nc.sorted { box-shadow: 0 0 0 2px var(--st), 0 6px 14px rgba(20, 30, 70, .2); }
+        .nc.dim { opacity: .35; }
+        .nc.moving { z-index: 3; }
+        .nc.held { z-index: 4; box-shadow: 0 0 0 2px var(--st), 0 16px 18px rgba(20, 30, 70, .3); }
+        .cards.done .nc { animation: cardWave 600ms ease-in-out both; animation-delay: calc(var(--i) * 45ms); }
+        @keyframes cardWave { 0%, 100% { translate: 0 0; } 45% { translate: 0 -16px; } }
+        .legend .note-cards { display: none; }
+        .chart.mode-cards ~ .legend .note-cards { display: inline; }
+
         .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .8rem; color: var(--muted); }
         .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
 
@@ -243,12 +270,14 @@
             .info-grid { grid-template-columns: 1fr; }
             .card { padding: 16px; }
             .bars { height: 260px; }
+            .cards { height: 230px; padding-top: 100px; }
             .hero { padding-top: 36px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
-            .bar, .tab { transition: none; }
+            .bar, .tab, .nc { transition: none; }
+            .cards.done .nc { animation: none; }
         }
     </style>
 </head>
@@ -294,7 +323,7 @@
                     </span>
                 </label>
                 <button class="btn" id="shuffleBtn" type="button">🔀 새 데이터</button>
-                <label class="field grow">직접 입력 (쉼표/공백으로 구분, 2~60개, 1~999)
+                <label class="field grow">직접 입력 (쉼표/공백으로 구분, <span id="customRange">2~60</span>개, 1~999)
                     <span class="row">
                         <input type="text" id="custom" placeholder="예: 38, 27, 43, 3, 9, 82, 10" autocomplete="off">
                         <button class="btn" id="applyBtn" type="button">적용</button>
@@ -303,8 +332,14 @@
             </div>
             <div class="err" id="err" role="alert"></div>
 
-            <div class="chart">
+            <div class="vis-switch" role="group" aria-label="시각화 방식">
+                <span class="lbl">시각화</span>
+                <button class="btn seg" type="button" id="modeBars" aria-pressed="true">📊 막대 그래프</button>
+                <button class="btn seg" type="button" id="modeCards" aria-pressed="false">🃏 숫자 카드 (최대 20개)</button>
+            </div>
+            <div class="chart" id="chart">
                 <div class="bars" id="bars" aria-hidden="true"></div>
+                <div class="cards" id="cards" aria-hidden="true" hidden></div>
                 <div class="tags" id="tags" aria-hidden="true"></div>
                 <div class="aux-wrap" id="auxWrap" hidden>
                     <div class="aux-title">보조 배열 (병합 중인 두 구간의 복사본)</div>
@@ -318,6 +353,7 @@
                 <span id="legPivot"><i style="background:var(--pivot)"></i>피벗</span>
                 <span><i style="background:var(--done)"></i>위치 확정</span>
                 <span><i style="background:var(--bar);opacity:.3"></i>현재 작업 범위 밖</span>
+                <span class="note-cards">위로 들어 올린 카드 = 잠시 빼 둔 원소(임시 변수·병합 중인 값) · 살짝 올라온 카드 = 비교 중 · 카드 아래 막대 = 값의 크기</span>
             </div>
 
             <div class="msg" id="msg" aria-live="polite"></div>
@@ -417,13 +453,32 @@
         const sorted = new Array(n).fill(false);
         const c = { a, n, cmp: 0, swp: 0, range: null, pivot: -1, aux: algo.usesAux ? new Array(n).fill(null) : null };
 
+        // 카드 시각화용 신원 추적: 카드 p는 자리 px[p]에 놓여 있고, 임시로 빼 둔 상태면 held[p]=true.
+        // occ[slot]은 그 자리의 카드(없으면 -1). 카드의 값은 val[p] = 처음 값.
+        const occ = Array.from({ length: n }, (_, i) => i);
+        const px = occ.slice(), held = new Array(n).fill(false), val = data.slice();
+        const place = (p, slot) => { px[p] = slot; held[p] = false; occ[slot] = p; };
+        // c.write(i, v)에서 v를 i 자리로 옮기는 카드를 고른다: 제자리 > 빼 둔 카드(왼쪽 우선) > 가장 가까운 같은 값
+        const whoWrites = (i, v) => {
+            const old = occ[i];
+            if (old >= 0 && val[old] === v) return old;
+            let best = -1;
+            for (let q = 0; q < n; q++) if (held[q] && val[q] === v && (best < 0 || px[q] < px[best])) best = q;
+            if (best >= 0) return best;
+            for (let q = 0; q < n; q++) {
+                if (held[q] || px[q] === i || val[q] !== v || occ[px[q]] !== q) continue;
+                if (best < 0 || Math.abs(px[q] - i) < Math.abs(px[best] - i)) best = q;
+            }
+            return best >= 0 ? best : old;
+        };
+
         // hl: { cmp: 비교 강조, act: 교환/쓰기 강조, axc: 보조 배열 비교 강조 }
         const snap = (hl, line, msg, tags) => steps.push({
             arr: a.slice(), sorted: sorted.slice(),
             hl: { cmp: hl.cmp || [], act: hl.act || [], axc: hl.axc || [] },
             line, msg, tags: tags || {},
             range: c.range && c.range.slice(), pivot: c.pivot, aux: c.aux && c.aux.slice(),
-            cmp: c.cmp, swp: c.swp
+            cmp: c.cmp, swp: c.swp, px: px.slice(), held: held.slice()
         });
 
         c.note = (line, msg, hl, tags) => snap(hl || {}, line, msg, tags);
@@ -431,14 +486,32 @@
         c.compare = (i, j, line, msg, tags) => { c.count([i, j], line, msg, tags); return a[i] - a[j]; };
         c.swap = (i, j, line, msg, tags) => {
             [a[i], a[j]] = [a[j], a[i]]; c.swp++;
+            const pi = occ[i], pj = occ[j];
+            place(pi, j); place(pj, i);
             snap({ act: [i, j] }, line, msg, tags);
         };
-        c.write = (i, v, line, msg, tags) => { a[i] = v; c.swp++; snap({ act: [i] }, line, msg, tags); };
+        c.write = (i, v, line, msg, tags) => {
+            a[i] = v; c.swp++;
+            const old = occ[i], p = whoWrites(i, v);
+            if (p !== old) {
+                if (!held[p] && occ[px[p]] === p) occ[px[p]] = -1;
+                if (old >= 0) { held[old] = true; px[old] = i; }
+                place(p, i);
+            }
+            snap({ act: [i] }, line, msg, tags);
+        };
         c.mark = (...idx) => idx.forEach((i) => { sorted[i] = true; });
 
         snap({}, -1, `${algo.name}을(를) 시작할 준비가 됐어요. ▶ 재생 또는 "다음" 버튼을 눌러 보세요.`);
         algo.run(c);
         sorted.fill(true);
+        // 남은 빈자리에는 빼 둔 카드를 돌려놓는다.
+        for (let i = 0; i < n; i++) {
+            if (occ[i] >= 0) continue;
+            let q = -1;
+            for (let k = 0; k < n; k++) if (held[k] && (val[k] === a[i] || q < 0)) { q = k; if (val[k] === a[i]) break; }
+            if (q >= 0) place(q, i);
+        }
         c.range = null; c.pivot = -1;
         snap({}, -1, '✓ 정렬 완료! 모든 원소가 제자리에 확정되었습니다.');
         return steps;
@@ -869,9 +942,10 @@
 
     const PATTERN_NAME = { random: '무작위', nearly: '거의 정렬됨', reverse: '역순', sorted: '이미 정렬됨', few: '중복 많음', custom: '직접 입력' };
 
-    function parseCustom(text) {
+    const MAX_CARDS = 20;
+    function parseCustom(text, max = 60) {
         const parts = text.trim().split(/[\s,]+/).filter(Boolean);
-        if (parts.length < 2 || parts.length > 60) return { error: `숫자는 2~60개여야 합니다. (현재 ${parts.length}개)` };
+        if (parts.length < 2 || parts.length > max) return { error: `숫자는 2~${max}개여야 합니다. (현재 ${parts.length}개)` };
         const nums = parts.map(Number);
         if (nums.some((v) => !Number.isInteger(v) || v < 1 || v > 999)) return { error: '1~999 사이의 정수만 입력할 수 있습니다.' };
         return { nums };
@@ -881,44 +955,76 @@
      * 6. 렌더링
      * ===================================================================== */
     const el = {
-        tabs: $('tabs'), bars: $('bars'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
+        tabs: $('tabs'), bars: $('bars'), cards: $('cards'), chart: $('chart'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
         msg: $('msg'), play: $('playBtn'), scrub: $('scrub'), speed: $('speed'), speedVal: $('speedVal'),
         size: $('size'), sizeVal: $('sizeVal'), pattern: $('pattern'), custom: $('custom'), err: $('err'),
         sCmp: $('sCmp'), sSwp: $('sSwp'), sStep: $('sStep'), sState: $('sState'), legPivot: $('legPivot'),
         infoMain: $('infoMain'), infoSide: $('infoSide'), cmpBody: $('cmpBody'), meters: $('meters'), measureNote: $('measureNote')
     };
     let barEls = [], tagEls = [], auxEls = [], maxV = 1, showVal = true;
+    let cardEls = [], pitch = 0, cardOff = 0;
+    const LIFT = 64;
+    let mode = 'bars';
+    try { if (localStorage.getItem('vis-mode') === 'cards') mode = 'cards'; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
 
     function buildStage() {
         const n = state.data.length;
         maxV = Math.max(...state.data);
-        const w = el.bars.clientWidth || 600;
+        const isCards = mode === 'cards';
+        el.bars.hidden = isCards; el.cards.hidden = !isCards;
+        el.chart.classList.toggle('mode-cards', isCards);
+        const w = (isCards ? el.cards : el.bars).clientWidth || 600;
         const gap = n > 40 ? 2 : n > 24 ? 3 : 5;
         const per = (w - gap * (n - 1)) / n;
         showVal = per >= 24;
         const showTags = per >= 18;
         [el.bars, el.tags, el.auxBars].forEach((e) => e.style.setProperty('--gap', gap + 'px'));
-        el.bars.innerHTML = ''; el.tags.innerHTML = ''; el.auxBars.innerHTML = '';
-        barEls = []; tagEls = []; auxEls = [];
+        el.bars.innerHTML = ''; el.tags.innerHTML = ''; el.auxBars.innerHTML = ''; el.cards.innerHTML = '';
+        barEls = []; tagEls = []; auxEls = []; cardEls = [];
+        pitch = per + gap;
+        const cw = Math.min(per, 72), ch = Math.round(cw * 1.4);
+        cardOff = (per - cw) / 2;
         for (let i = 0; i < n; i++) {
-            const b = document.createElement('div');
-            b.className = 'bar';
-            const v = document.createElement('span');
-            v.className = 'v';
-            b.appendChild(v);
-            el.bars.appendChild(b);
-            barEls.push(b);
+            if (isCards) {
+                const sl = document.createElement('div');
+                sl.className = 'slot';
+                sl.style.cssText = `width:${cw}px;height:${ch}px;transform:translateX(${i * pitch + cardOff}px)`;
+                el.cards.appendChild(sl);
+            } else {
+                const b = document.createElement('div');
+                b.className = 'bar';
+                const v = document.createElement('span');
+                v.className = 'v';
+                b.appendChild(v);
+                el.bars.appendChild(b);
+                barEls.push(b);
+            }
             const t = document.createElement('div');
             t.className = 't';
             el.tags.appendChild(t);
             tagEls.push(t);
-            const x = document.createElement('div');
-            x.className = 'bar';
-            el.auxBars.appendChild(x);
-            auxEls.push(x);
+            if (!isCards) {
+                const x = document.createElement('div');
+                x.className = 'bar';
+                el.auxBars.appendChild(x);
+                auxEls.push(x);
+            }
+        }
+        if (isCards) {
+            // 카드는 슬롯 위에 얹히도록 슬롯을 모두 만든 뒤 추가한다.
+            for (let p = 0; p < n; p++) {
+                const v = state.data[p];
+                const e = document.createElement('div');
+                e.className = 'nc';
+                e.style.cssText = `width:${cw}px;height:${ch}px;--hue:${Math.round((v / maxV) * 280)};--i:${p}`;
+                e.innerHTML = `<b class="num" style="font-size:${Math.max(13, Math.min(26, cw * 0.42))}px">${v}</b><span class="meter"><i style="width:${Math.max(6, (v / maxV) * 100)}%"></i></span>`;
+                e._x = null;
+                el.cards.appendChild(e);
+                cardEls.push(e);
+            }
         }
         el.tags.style.display = showTags ? 'flex' : 'none';
-        el.aux.hidden = !state.algo.usesAux;
+        el.aux.hidden = !state.algo.usesAux || isCards;
         el.legPivot.style.display = state.algo.usesPivot ? '' : 'none';
     }
 
@@ -935,14 +1041,15 @@
         if (s.pivot >= 0) cls[s.pivot] = 'pivot';
         s.hl.act.forEach((i) => { cls[i] = 'act'; });
 
-        for (let i = 0; i < n; i++) {
+        if (mode === 'cards') renderCards(s, cls);
+        else for (let i = 0; i < n; i++) {
             const b = barEls[i];
             b.style.height = Math.max(2, (s.arr[i] / maxV) * 100) + '%';
             b.className = 'bar ' + cls[i];
             if (showVal) b.firstChild.textContent = s.arr[i];
-            tagEls[i].textContent = s.tags[i] || '';
         }
-        if (s.aux) {
+        for (let i = 0; i < n; i++) tagEls[i].textContent = s.tags[i] || '';
+        if (s.aux && mode === 'bars') {
             for (let i = 0; i < n; i++) {
                 const v = s.aux[i];
                 auxEls[i].style.height = v == null ? '0%' : Math.max(3, (v / maxV) * 100) + '%';
@@ -962,6 +1069,59 @@
         $('firstBtn').disabled = $('prevBtn').disabled = state.pos === 0;
         $('lastBtn').disabled = $('nextBtn').disabled = state.pos === last;
         el.play.textContent = state.playing ? '⏸ 일시정지' : state.pos === last ? '↻ 다시 재생' : '▶ 재생';
+    }
+
+    // 카드 모드: 자리가 바뀐 카드는 호(arc)를 그리며 이동한다. 오른쪽으로 가는 카드는 높이, 왼쪽으로 가는 카드는 낮게 지나가 서로 부딪히지 않는다.
+    function renderCards(s, cls) {
+        const n = s.arr.length;
+        const last = state.pos === state.steps.length - 1;
+        el.cards.classList.toggle('done', last && n > 1);
+        for (let p = 0; p < n; p++) {
+            const e = cardEls[p], slot = s.px[p], held = s.held[p];
+            const x = slot * pitch + cardOff;
+            const y = held ? -LIFT : cls[slot] === 'cmp' ? -12 : 0;
+            e.className = 'nc ' + (cls[slot] || '') + (held ? ' held' : '');
+            e.style.transform = `translate(${x}px, ${y}px)`;
+            if (e._x !== null && (e._x !== x || e._y !== y) && state.mdur > 0) {
+                const dx = x - e._x, dist = Math.abs(dx) / pitch;
+                const arc = e._x === x ? 0 : Math.min(80, 28 + dist * 14) * (dx > 0 ? 1 : 0.4);
+                const mid = `translate(${(e._x + x) / 2}px, ${Math.min(e._y, y) - arc}px)`;
+                if (e._anim) e._anim.cancel();
+                e._anim = e.animate(
+                    [{ transform: `translate(${e._x}px, ${e._y}px)` }, { transform: mid, offset: 0.5 }, { transform: `translate(${x}px, ${y}px)` }],
+                    { duration: state.mdur, easing: 'cubic-bezier(.4, 0, .2, 1)' }
+                );
+                if (e._x !== x) {
+                    e.classList.add('moving');
+                    e._anim.onfinish = () => e.classList.remove('moving');
+                }
+            }
+            e._x = x; e._y = y;
+        }
+    }
+
+    // 카드 모드는 숫자가 잘 보이도록 최대 MAX_CARDS개로 제한한다.
+    function applyModeLimits() {
+        const cards = mode === 'cards';
+        el.size.max = cards ? MAX_CARDS : 60;
+        el.sizeVal.textContent = el.size.value;
+        $('customRange').textContent = cards ? `2~${MAX_CARDS}` : '2~60';
+    }
+
+    function setMode(m) {
+        if (m === mode) return;
+        mode = m;
+        try { localStorage.setItem('vis-mode', m); } catch (e) { /* 무시 */ }
+        $('modeBars').setAttribute('aria-pressed', String(m === 'bars'));
+        $('modeCards').setAttribute('aria-pressed', String(m === 'cards'));
+        applyModeLimits();
+        applySpeed();
+        if (m === 'cards' && state.data.length > MAX_CARDS) {
+            // 많으면 같은 유형으로 12개를 새로 만든다. 직접 입력한 값은 앞 20개만 남긴다.
+            if (state.pattern === 'custom') { el.size.value = MAX_CARDS; setData(state.data.slice(0, MAX_CARDS), 'custom'); }
+            else { el.size.value = 12; setData(generate(state.pattern, 12), state.pattern); }
+            el.sizeVal.textContent = el.size.value;
+        } else if (state.steps.length) { buildStage(); render(); }
     }
 
     function renderTabs() {
@@ -1041,7 +1201,7 @@
      * 7. 제어: 로드 / 재생
      * ===================================================================== */
     function load() {
-        pause();
+        state.playing = false; cancelAnimationFrame(raf); // 스테이지를 다시 만들기 전이라 render()는 부르지 않는다.
         state.steps = record(state.algo, state.data);
         state.pos = 0;
         el.scrub.max = state.steps.length - 1;
@@ -1073,12 +1233,14 @@
         render();
     }
 
+    // 카드 모드에서는 이동이 끝나기 전에 다음 단계로 넘어가지 않도록 이동 시간으로 상한을 둔다.
+    const curRate = () => (mode === 'cards' && state.mdur > 0 ? Math.min(state.rate, 1000 / state.mdur) : state.rate);
     let raf = 0, lastT = 0, acc = 0;
     function tick(t) {
         if (!state.playing) return;
         const dt = Math.min(100, t - lastT);
         lastT = t;
-        acc += (dt / 1000) * state.rate;
+        acc += (dt / 1000) * curRate();
         const adv = Math.floor(acc);
         if (adv > 0) { acc -= adv; state.pos = Math.min(state.steps.length - 1, state.pos + adv); }
         if (state.pos >= state.steps.length - 1) { state.playing = false; render(); return; }
@@ -1101,8 +1263,9 @@
     function applySpeed() {
         const v = Number(el.speed.value);
         state.rate = 2 * Math.pow(2, v / 12);
-        el.speedVal.textContent = `${Math.round(state.rate)}단계/초`;
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        state.mdur = reduce ? 0 : Math.round(Math.max(130, Math.min(450, 1000 / state.rate)));
+        el.speedVal.textContent = `${Math.round(curRate())}단계/초`;
         document.documentElement.style.setProperty('--dur', reduce ? '0ms' : Math.min(180, Math.round(700 / state.rate)) + 'ms');
     }
 
@@ -1122,6 +1285,8 @@
     $('lastBtn').addEventListener('click', () => { pause(); go(state.steps.length - 1); });
     el.scrub.addEventListener('input', () => { pause(); go(Number(el.scrub.value)); });
     el.speed.addEventListener('input', applySpeed);
+    $('modeBars').addEventListener('click', () => setMode('bars'));
+    $('modeCards').addEventListener('click', () => setMode('cards'));
 
     const regenerate = () => setData(generate(el.pattern.value, Number(el.size.value)), el.pattern.value);
     el.pattern.addEventListener('change', regenerate);
@@ -1130,7 +1295,7 @@
     $('shuffleBtn').addEventListener('click', regenerate);
 
     const applyCustom = () => {
-        const r = parseCustom(el.custom.value);
+        const r = parseCustom(el.custom.value, mode === 'cards' ? MAX_CARDS : 60);
         if (r.error) { el.err.textContent = r.error; return; }
         el.size.value = r.nums.length;
         el.sizeVal.textContent = r.nums.length;
@@ -1160,12 +1325,16 @@
     // 테스트/디버깅용으로 기록기만 노출한다.
     window.__sorting = { ALGOS, record };
 
+    $('modeBars').setAttribute('aria-pressed', String(mode === 'bars'));
+    $('modeCards').setAttribute('aria-pressed', String(mode === 'cards'));
+    applyModeLimits();
     applySpeed();
     const initial = ALGOS.find((a) => a.id === location.hash.slice(1));
     if (initial) state.algo = initial;
     renderTabs();
     renderCompareTable();
-    setData(generate('random', 20), 'random');
+    if (mode === 'cards') { el.size.value = 12; el.sizeVal.textContent = 12; }
+    setData(generate('random', mode === 'cards' ? 12 : 20), 'random');
 })();
 </script>
 </body>
