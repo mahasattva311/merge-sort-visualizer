@@ -166,87 +166,32 @@
         .aux .bar.cmp { background: var(--cmp); }
         .aux .bar .v { display: none; }
 
-
-        /* ---------- Visualization mode switch / characters ---------- */
-        .bars[hidden], .people[hidden] { display: none; }
+        /* ---------- Visualization mode switch / number cards ---------- */
+        .bars[hidden], .cards[hidden] { display: none; }
         .vis-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 10px; }
         .vis-switch .lbl { font-size: .8rem; font-weight: 700; color: var(--muted); margin-right: 2px; }
-        .vis-switch .anim-speed { display: none; align-items: center; gap: 8px; margin-left: auto; font-size: .8rem; font-weight: 700; color: var(--muted); }
-        .vis-switch .anim-speed.on { display: flex; }
-        .vis-switch .anim-speed .val { min-width: 3em; }
         button.btn.seg[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-        .people { position: relative; height: 340px; padding-top: 110px; border-bottom: 2px solid var(--border); overflow: hidden; }
-        .p {
-            position: absolute; bottom: 0; left: 0; perspective: 700px;
-            transition: transform var(--mdur) cubic-bezier(.4, 0, .2, 1), opacity var(--mdur) ease;
-            will-change: transform;
+        .cards { position: relative; height: 240px; padding-top: 104px; border-bottom: 2px solid var(--border); overflow: hidden; }
+        .slot { position: absolute; bottom: 0; left: 0; border: 1.5px dashed var(--border); border-radius: 9px; opacity: .8; }
+        .nc {
+            --st: var(--border); --hc: hsl(var(--hue) 68% 55%);
+            position: absolute; bottom: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+            background: var(--card); color: var(--text); border: 2px solid var(--st); border-top: 6px solid var(--hc); border-radius: 9px;
+            box-shadow: 0 2px 6px rgba(20, 30, 70, .14); user-select: none; will-change: transform;
+            transition: opacity var(--dur) ease, border-color var(--dur) ease, box-shadow var(--dur) ease;
         }
-        .p.dim { opacity: .38; }
-        .p.held { z-index: 3; }
-        .p .fig { width: min(100%, 112px); margin: 0 auto; transform-origin: 50% 100%; }
-        .p svg { display: block; width: 100%; height: auto; overflow: visible; }
-        .p svg * { transform-box: view-box; }
-        .p::after { /* 발밑 상태 표시 */
-            content: ""; position: absolute; left: 50%; bottom: -7px; width: min(90%, 72px); height: 4px; border-radius: 3px;
-            transform: translateX(-50%); background: transparent; transition: background-color var(--mdur) ease;
-        }
-        .p { --bc: #9aa3bd; }
-        .p.cmp { --bc: var(--cmp); } .p.act { --bc: var(--act); } .p.pivot { --bc: var(--pivot); } .p.sorted { --bc: var(--done); }
-        .p.cmp::after { background: var(--cmp); } .p.act::after { background: var(--act); }
-        .p.pivot::after { background: var(--pivot); } .p.sorted::after { background: var(--done); }
-        .p.cmp .board, .p.act .board, .p.pivot .board, .p.sorted .board { stroke-width: 3.4; filter: drop-shadow(0 0 3px var(--bc)); }
-        .p.held .fig { filter: drop-shadow(0 8px 6px rgba(0, 0, 0, .28)); }
-        .p .board { stroke: var(--bc); stroke-width: 2.2; transition: stroke var(--mdur) ease; }
-
-        /* 상시 모션: 눈 깜빡임, 트윈테일/머리카락 살랑 */
-        .p .eyes { transform-origin: 50px 40px; animation: blink 4.6s infinite; animation-delay: calc(var(--i) * -0.7s); }
-        .p .tail.l { transform-origin: 30px 26px; animation: tailIdleL 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * -0.4s); }
-        .p .tail.r { transform-origin: 70px 26px; animation: tailIdleR 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * -0.4s); }
-        .p .hairB { transform-origin: 50px 28px; animation: tailIdleR 3.6s ease-in-out infinite; }
-        .p .leg.l { transform-origin: 44px 124px; } .p .leg.r { transform-origin: 56px 124px; }
-        .p .skirt { transform-origin: 50px 106px; }
-        .p .hold { transform-origin: 50px 90px; }
-        .p .head { transform-origin: 50px 58px; }
-        .p.cmp .head { animation: ponder calc(var(--mdur) * 1.4) ease-in-out; } /* 비교 중: 갸우뚱 */
-        .p.held .leg.l { animation: kickL 700ms ease-in-out infinite; } /* 들려 올라가 대롱대롱 */
-        .p.held .leg.r { animation: kickR 700ms ease-in-out infinite; }
-
-        /* 이동 중 춤: 몸 전체 동작 6종 + 공통 보조 모션(머리카락·치마·다리·숫자판) */
-        .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .tail.l, .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .hairB { animation: tailL var(--mdur) ease-in-out; }
-        .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .tail.r { animation: tailR var(--mdur) ease-in-out; }
-        .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .skirt { animation: flare var(--mdur) ease-in-out; }
-        .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .hold { animation: holdBob var(--mdur) ease-in-out; }
-        .p:is(.d0, .d3, .d5) .leg.l, .p.d2 .leg.r, .p.d4 .leg.l { animation: kickL var(--mdur) ease-in-out; }
-        .p:is(.d0, .d3, .d5) .leg.r, .p.d2 .leg.l, .p.d4 .leg.r { animation: kickR var(--mdur) ease-in-out; }
-        .p.d0 .fig { animation: hop var(--mdur) ease-in-out; }
-        .p.d1 .fig { animation: twirl var(--mdur) ease-in-out; }
-        .p.d2 .fig { animation: sway var(--mdur) ease-in-out; }
-        .p.d3 .fig { animation: cartwheel var(--mdur) ease-in-out; }
-        .p.d4 .fig { animation: disco var(--mdur) ease-in-out; }
-        .p.d5 .fig { animation: jelly var(--mdur) ease-in-out; }
-        @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
-        @keyframes tailIdleL { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(3deg); } }
-        @keyframes tailIdleR { 0%, 100% { transform: rotate(2deg); } 50% { transform: rotate(-3deg); } }
-        @keyframes tailL { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(22deg); } 65% { transform: rotate(-14deg); } }
-        @keyframes tailR { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-22deg); } 65% { transform: rotate(14deg); } }
-        @keyframes flare { 0%, 100% { transform: scaleX(1); } 45% { transform: scaleX(1.16) scaleY(.96); } }
-        @keyframes holdBob { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-4px) rotate(-5deg); } 70% { transform: translateY(2px) rotate(5deg); } }
-        @keyframes ponder { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-7deg); } 70% { transform: rotate(7deg); } }
-        @keyframes hop { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(0) scaleY(.94); } 50% { transform: translateY(-38px) scaleY(1.03); } 85% { transform: translateY(0) scaleY(.96); } }
-        @keyframes twirl { 0%, 100% { transform: translateY(0) rotateY(0); } 50% { transform: translateY(-24px) rotateY(180deg); } 99% { transform: translateY(0) rotateY(359deg); } }
-        @keyframes sway { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-11deg) translateY(-8px); } 75% { transform: rotate(11deg) translateY(-8px); } }
-        @keyframes cartwheel { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-34px) rotate(180deg); } 99% { transform: translateY(0) rotate(359deg); } }
-        @keyframes disco { 0%, 100% { transform: skewX(0) translateY(0); } 25% { transform: skewX(-10deg) translateY(-7px); } 50% { transform: skewX(0) translateY(0); } 75% { transform: skewX(10deg) translateY(-7px); } }
-        @keyframes jelly { 0%, 100% { transform: scale(1, 1); } 20% { transform: scale(1.12, .86); } 45% { transform: translateY(-30px) scale(.92, 1.1); } 70% { transform: scale(1.08, .92); } 85% { transform: translateY(-6px) scale(.98, 1.02); } }
-        @keyframes kickL { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(26deg); } }
-        @keyframes kickR { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-26deg); } }
-        .people.cheer .p .fig { animation: hop 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
-        .people.cheer .p .tail.l, .people.cheer .p .hairB { animation: tailL 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
-        .people.cheer .p .tail.r { animation: tailR 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
-        .people.cheer .p .skirt { animation: flare 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
-        .people.cheer .p .hold { animation: holdBob 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
-        .legend .note-people { display: none; }
-        .chart.mode-people ~ .legend .note-people { display: inline; }
+        .nc .num { font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+        .nc .meter { display: block; width: 68%; height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; }
+        .nc .meter i { display: block; height: 100%; background: var(--hc); border-radius: 3px; }
+        .nc.cmp { --st: var(--cmp); } .nc.act { --st: var(--act); } .nc.pivot { --st: var(--pivot); } .nc.sorted { --st: var(--done); }
+        .nc.cmp, .nc.act, .nc.pivot, .nc.sorted { box-shadow: 0 0 0 2px var(--st), 0 6px 14px rgba(20, 30, 70, .2); }
+        .nc.dim { opacity: .35; }
+        .nc.moving { z-index: 3; }
+        .nc.held { z-index: 4; box-shadow: 0 0 0 2px var(--st), 0 16px 18px rgba(20, 30, 70, .3); }
+        .cards.done .nc { animation: cardWave 600ms ease-in-out both; animation-delay: calc(var(--i) * 45ms); }
+        @keyframes cardWave { 0%, 100% { translate: 0 0; } 45% { translate: 0 -16px; } }
+        .legend .note-cards { display: none; }
+        .chart.mode-cards ~ .legend .note-cards { display: inline; }
 
         .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .8rem; color: var(--muted); }
         .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
@@ -325,14 +270,14 @@
             .info-grid { grid-template-columns: 1fr; }
             .card { padding: 16px; }
             .bars { height: 260px; }
-            .people { height: 290px; padding-top: 90px; }
+            .cards { height: 230px; padding-top: 100px; }
             .hero { padding-top: 36px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
-            .bar, .tab, .p { transition: none; }
-            .p *, .p .fig { animation: none !important; }
+            .bar, .tab, .nc { transition: none; }
+            .cards.done .nc { animation: none; }
         }
     </style>
 </head>
@@ -389,16 +334,12 @@
 
             <div class="vis-switch" role="group" aria-label="시각화 방식">
                 <span class="lbl">시각화</span>
-                <button class="btn seg" type="button" id="modeBars" data-mode="bars" aria-pressed="true">📊 막대 그래프</button>
-                <button class="btn seg" type="button" id="modePeople" data-mode="people" aria-pressed="false">🕺 캐릭터 (최대 10개)</button>
-                <label class="anim-speed" id="animSpeedWrap">동작 속도
-                    <input type="range" id="animSpeed" min="25" max="200" value="100" aria-label="캐릭터 동작 속도">
-                    <span class="val" id="animSpeedVal">1.0×</span>
-                </label>
+                <button class="btn seg" type="button" id="modeBars" aria-pressed="true">📊 막대 그래프</button>
+                <button class="btn seg" type="button" id="modeCards" aria-pressed="false">🃏 숫자 카드 (최대 20개)</button>
             </div>
             <div class="chart" id="chart">
                 <div class="bars" id="bars" aria-hidden="true"></div>
-                <div class="people" id="people" aria-hidden="true" hidden></div>
+                <div class="cards" id="cards" aria-hidden="true" hidden></div>
                 <div class="tags" id="tags" aria-hidden="true"></div>
                 <div class="aux-wrap" id="auxWrap" hidden>
                     <div class="aux-title">보조 배열 (병합 중인 두 구간의 복사본)</div>
@@ -412,7 +353,7 @@
                 <span id="legPivot"><i style="background:var(--pivot)"></i>피벗</span>
                 <span><i style="background:var(--done)"></i>위치 확정</span>
                 <span><i style="background:var(--bar);opacity:.3"></i>현재 작업 범위 밖</span>
-                <span class="note-people">가슴 앞 숫자판이 값 · 위로 들어 올린 소녀는 잠시 빼 둔 원소 (임시 변수·병합 중인 값)</span>
+                <span class="note-cards">위로 들어 올린 카드 = 잠시 빼 둔 원소(임시 변수·병합 중인 값) · 살짝 올라온 카드 = 비교 중 · 카드 아래 막대 = 값의 크기</span>
             </div>
 
             <div class="msg" id="msg" aria-live="polite"></div>
@@ -512,11 +453,12 @@
         const sorted = new Array(n).fill(false);
         const c = { a, n, cmp: 0, swp: 0, range: null, pivot: -1, aux: algo.usesAux ? new Array(n).fill(null) : null };
 
-        // 캐릭터 시각화용 신원 추적: 사람 p는 자리 px[p]에 서 있고, 임시로 빼 둔 상태면 held[p]=true.
-        // occ[slot]은 그 자리에 서 있는 사람(없으면 -1). 값은 val[p] = 처음 값.
+        // 카드 시각화용 신원 추적: 카드 p는 자리 px[p]에 놓여 있고, 임시로 빼 둔 상태면 held[p]=true.
+        // occ[slot]은 그 자리의 카드(없으면 -1). 카드의 값은 val[p] = 처음 값.
         const occ = Array.from({ length: n }, (_, i) => i);
         const px = occ.slice(), held = new Array(n).fill(false), val = data.slice();
         const place = (p, slot) => { px[p] = slot; held[p] = false; occ[slot] = p; };
+        // c.write(i, v)에서 v를 i 자리로 옮기는 카드를 고른다: 제자리 > 빼 둔 카드(왼쪽 우선) > 가장 가까운 같은 값
         const whoWrites = (i, v) => {
             const old = occ[i];
             if (old >= 0 && val[old] === v) return old;
@@ -563,7 +505,7 @@
         snap({}, -1, `${algo.name}을(를) 시작할 준비가 됐어요. ▶ 재생 또는 "다음" 버튼을 눌러 보세요.`);
         algo.run(c);
         sorted.fill(true);
-        // 남은 빈자리에는 빼 둔 사람을 돌려놓는다.
+        // 남은 빈자리에는 빼 둔 카드를 돌려놓는다.
         for (let i = 0; i < n; i++) {
             if (occ[i] >= 0) continue;
             let q = -1;
@@ -1000,7 +942,7 @@
 
     const PATTERN_NAME = { random: '무작위', nearly: '거의 정렬됨', reverse: '역순', sorted: '이미 정렬됨', few: '중복 많음', custom: '직접 입력' };
 
-    const MAX_PEOPLE = 10;
+    const MAX_CARDS = 20;
     function parseCustom(text, max = 60) {
         const parts = text.trim().split(/[\s,]+/).filter(Boolean);
         if (parts.length < 2 || parts.length > max) return { error: `숫자는 2~${max}개여야 합니다. (현재 ${parts.length}개)` };
@@ -1013,114 +955,41 @@
      * 6. 렌더링
      * ===================================================================== */
     const el = {
-        tabs: $('tabs'), bars: $('bars'), people: $('people'), chart: $('chart'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
+        tabs: $('tabs'), bars: $('bars'), cards: $('cards'), chart: $('chart'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
         msg: $('msg'), play: $('playBtn'), scrub: $('scrub'), speed: $('speed'), speedVal: $('speedVal'),
-        animSpeed: $('animSpeed'), animSpeedVal: $('animSpeedVal'), size: $('size'), sizeVal: $('sizeVal'), pattern: $('pattern'), custom: $('custom'), err: $('err'),
+        size: $('size'), sizeVal: $('sizeVal'), pattern: $('pattern'), custom: $('custom'), err: $('err'),
         sCmp: $('sCmp'), sSwp: $('sSwp'), sStep: $('sStep'), sState: $('sState'), legPivot: $('legPivot'),
         infoMain: $('infoMain'), infoSide: $('infoSide'), cmpBody: $('cmpBody'), meters: $('meters'), measureNote: $('measureNote')
     };
     let barEls = [], tagEls = [], auxEls = [], maxV = 1, showVal = true;
-    let personEls = [], pitch = 0, personW = 0;
+    let cardEls = [], pitch = 0, cardOff = 0;
     const LIFT = 64;
-    // 캐릭터마다 다른 머리색·눈색·리본색·머리 모양(0 트윈테일 / 1 롱 스트레이트 / 2 사이드 포니테일)
-    const HAIR = ['#f48fb1', '#7b4a32', '#262626', '#5c8df6', '#f4cf55', '#d5dde3', '#a070e8', '#e45a5a', '#3fb5a8', '#f5a24b'];
-    const EYE = ['#d8457a', '#8a5a2b', '#3b6fd6', '#2e8f6a', '#c2589e', '#4aa3d8', '#7a45c9', '#c0392b', '#2a7f9e', '#b86a1a'];
-    const RIBBON = ['#e53935', '#43a047', '#fbc02d', '#1e88e5', '#ec407a', '#8e24aa', '#fb8c00', '#00acc1', '#e53935', '#43a047'];
-    const SKIN_TONE = '#fde3d0';
-
-    // 세일러복 미소녀(viewBox 100x190). 가슴 앞 숫자판에 값이 적힌다. 색은 CSS 변수(--hair 등)로 지정.
-    function girlSVG(i, value) {
-        const style = i % 3;
-        const sock = i % 2 ? '#ffffff' : '#27325c';
-        const digits = String(value).length;
-        const fs = digits >= 3 ? 12 : digits === 2 ? 16 : 19;
-        const back = style === 0
-            ? '<path class="tail l" fill="var(--hair)" d="M30 26 C8 34 4 72 11 100 C13 111 25 112 27 101 C29 80 31 60 37 40 Z"/><path class="tail r" fill="var(--hair)" d="M70 26 C92 34 96 72 89 100 C87 111 75 112 73 101 C71 80 69 60 63 40 Z"/>'
-            : style === 1
-                ? '<path class="hairB" fill="var(--hair)" d="M28 30 C18 62 21 104 23 128 Q50 134 77 128 C79 104 82 62 72 30 Z"/>'
-                : '<path class="hairB" fill="var(--hair)" d="M30 30 C24 52 26 68 31 74 L69 74 C74 68 76 52 70 30 Z"/><path class="tail r" fill="var(--hair)" d="M66 24 C96 18 102 64 90 100 C86 112 74 108 77 94 C82 66 74 46 62 38 Z"/>';
-        const bows = style === 0
-            ? '<g fill="var(--rib2)"><path d="M30 26 L20 19 L21 33 Z"/><path d="M30 26 L40 19 L39 33 Z"/><circle cx="30" cy="26" r="3"/><path d="M70 26 L60 19 L61 33 Z"/><path d="M70 26 L80 19 L79 33 Z"/><circle cx="70" cy="26" r="3"/></g>'
-            : style === 1
-                ? '<g fill="var(--rib2)"><path d="M62 17 L53 11 L54 24 Z"/><path d="M62 17 L71 11 L70 24 Z"/><circle cx="62" cy="17" r="3"/></g>'
-                : '<g fill="var(--rib2)"><path d="M68 25 L60 18 L59 31 Z"/><path d="M68 25 L77 19 L77 32 Z"/><circle cx="68" cy="25" r="3"/></g>';
-        return `<svg viewBox="0 0 100 190" aria-hidden="true">
-<ellipse cx="50" cy="178" rx="26" ry="4.5" fill="#000" opacity=".12"/>
-${back}
-<g class="leg l"><rect x="39" y="124" width="10" height="28" fill="${SKIN_TONE}"/><rect x="38.5" y="150" width="11" height="22" rx="2" fill="${sock}"/><rect x="38.5" y="152" width="11" height="2.2" fill="${style === 2 ? '#e53935' : '#ffffff'}" opacity=".9"/><path d="M36 172 Q36 167 43 167 Q51 167 52 173 Q52 178 44 178 L37 178 Q34 178 36 172 Z" fill="#3a2a2a"/></g>
-<g class="leg r"><rect x="51" y="124" width="10" height="28" fill="${SKIN_TONE}"/><rect x="50.5" y="150" width="11" height="22" rx="2" fill="${sock}"/><rect x="50.5" y="152" width="11" height="2.2" fill="${style === 2 ? '#e53935' : '#ffffff'}" opacity=".9"/><path d="M48 173 Q49 167 57 167 Q64 167 64 172 Q66 178 63 178 L56 178 Q48 178 48 173 Z" fill="#3a2a2a"/></g>
-<g class="skirt"><path d="M33 104 L67 104 L79 142 Q50 150 21 142 Z" fill="#2b3a6b"/><path d="M40 105 L33 145 M47 105 L42 147 M53 105 L58 147 M60 105 L67 145" stroke="#1e2a52" stroke-width="1.3" fill="none"/><path d="M22 139 Q50 147 78 139" stroke="#fff" stroke-width="1.6" fill="none"/><path d="M21.5 143 Q50 151 78.5 143" stroke="#fff" stroke-width="1" fill="none" opacity=".8"/></g>
-<path d="M37 62 Q34 86 35 108 L65 108 Q66 86 63 62 Z" fill="#ffffff"/>
-<path d="M35 104 L65 104 L66 109 L34 109 Z" fill="#f2f4fa"/>
-<rect x="45.5" y="52" width="9" height="12" fill="${SKIN_TONE}"/>
-<path d="M34 61 L50 80 L66 61 L73 71 L53 85 L47 85 L27 71 Z" fill="#2b3a6b"/>
-<path d="M31 69 L47.5 83 M69 69 L52.5 83 M35 65 L49 78 M65 65 L51 78" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-<g fill="var(--rib)"><path d="M50 78 L38 71 Q36 78 38 86 Z"/><path d="M50 78 L62 71 Q64 78 62 86 Z"/><path d="M47.5 80 L44 92 L49 89 Z"/><path d="M52.5 80 L56 92 L51 89 Z"/><circle cx="50" cy="78.5" r="3.4"/></g>
-<g class="head">
-<path d="M31 36 C31 21 69 21 69 36 C69 50 60 59 50 59 C40 59 31 50 31 36 Z" fill="${SKIN_TONE}"/>
-<ellipse cx="37" cy="47" rx="4.5" ry="2.4" fill="#ff8fa3" opacity=".45"/><ellipse cx="63" cy="47" rx="4.5" ry="2.4" fill="#ff8fa3" opacity=".45"/>
-<g class="eyes">
-<ellipse cx="41" cy="41" rx="5.8" ry="7" fill="#fff"/><ellipse cx="59" cy="41" rx="5.8" ry="7" fill="#fff"/>
-<ellipse cx="41" cy="42" rx="4.5" ry="6" fill="var(--eye)"/><ellipse cx="59" cy="42" rx="4.5" ry="6" fill="var(--eye)"/>
-<ellipse cx="41" cy="43" rx="2.2" ry="3.4" fill="#1b1b2b"/><ellipse cx="59" cy="43" rx="2.2" ry="3.4" fill="#1b1b2b"/>
-<circle cx="39.2" cy="38.8" r="2" fill="#fff"/><circle cx="57.2" cy="38.8" r="2" fill="#fff"/><circle cx="42.8" cy="46" r="1" fill="#fff"/><circle cx="60.8" cy="46" r="1" fill="#fff"/>
-<path d="M34.5 38 Q41 32.5 47.5 36.5" stroke="#2a2030" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M52.5 36.5 Q59 32.5 65.5 38" stroke="#2a2030" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-<path d="M34.5 38 L32.5 36.5 M65.5 38 L67.5 36.5" stroke="#2a2030" stroke-width="1.4" stroke-linecap="round"/>
-</g>
-<path d="M36 31.5 Q41 29 46 30.5 M54 30.5 Q59 29 64 31.5" stroke="var(--hair)" stroke-width="1.3" fill="none" stroke-linecap="round" filter="brightness(.8)"/>
-<path d="M49.4 47 Q50 48.2 50.8 47.4" stroke="#d08a78" stroke-width="1" fill="none" stroke-linecap="round"/>
-<path d="M45.5 51.5 Q50 55 54.5 51.5" stroke="#c0505c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-<path d="M30 37 C26 14 74 14 70 37 C67 30 63 26 58 23 C57 29 53 32 50 31 C47 32 43 29 42 23 C37 26 33 30 30 37 Z" fill="var(--hair)"/>
-<path d="M30 37 C28 47 30 57 34 64 L37 61 C34 53 34 45 35 37 Z" fill="var(--hair)"/><path d="M70 37 C72 47 70 57 66 64 L63 61 C66 53 66 45 65 37 Z" fill="var(--hair)"/>
-<path d="M38 20 Q50 14 62 20" stroke="#fff" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>
-<path d="M50 16 Q57 7 47 3 Q52 9 49 17 Z" fill="var(--hair)"/>
-<path d="M60 22 L68 25 M60 26 L67 29" stroke="#ffd54f" stroke-width="1.8" stroke-linecap="round"/>
-${bows}
-</g>
-<g class="hold">
-<path d="M34 62 L41 66 L36 85 L26 82 Z" fill="#fff"/><path d="M26.5 80.5 L36.5 83.5 L35.7 87 L25.5 84 Z" fill="#2b3a6b"/>
-<path d="M66 62 L59 66 L64 85 L74 82 Z" fill="#fff"/><path d="M73.5 80.5 L63.5 83.5 L64.3 87 L74.5 84 Z" fill="#2b3a6b"/>
-<path d="M26 86 L35 89 L33 102 L27 101 Z" fill="${SKIN_TONE}"/><path d="M74 86 L65 89 L67 102 L73 101 Z" fill="${SKIN_TONE}"/>
-<rect class="board" x="30" y="86" width="40" height="28" rx="3.5" fill="#fffdf5"/>
-<rect x="33" y="89" width="34" height="22" rx="2" fill="none" stroke="#d9d3c0" stroke-width="1"/>
-<text x="50" y="${104 + (fs === 12 ? -0.5 : 0)}" text-anchor="middle" font-size="${fs}" font-weight="800" font-family="system-ui, sans-serif" fill="#25243a">${value}</text>
-<ellipse cx="31.5" cy="100" rx="4.2" ry="5" fill="${SKIN_TONE}"/><ellipse cx="68.5" cy="100" rx="4.2" ry="5" fill="${SKIN_TONE}"/>
-<path d="M33 96.5 Q36 99 33.5 103 M67 96.5 Q64 99 66.5 103" stroke="#e8bfa6" stroke-width="1" fill="none"/>
-</g>
-</svg>`;
-    }
     let mode = 'bars';
-    try { if (localStorage.getItem('vis-mode') === 'people') mode = 'people'; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
+    try { if (localStorage.getItem('vis-mode') === 'cards') mode = 'cards'; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
 
     function buildStage() {
         const n = state.data.length;
         maxV = Math.max(...state.data);
-        const w = el.bars.clientWidth || 600;
+        const isCards = mode === 'cards';
+        el.bars.hidden = isCards; el.cards.hidden = !isCards;
+        el.chart.classList.toggle('mode-cards', isCards);
+        const w = (isCards ? el.cards : el.bars).clientWidth || 600;
         const gap = n > 40 ? 2 : n > 24 ? 3 : 5;
         const per = (w - gap * (n - 1)) / n;
         showVal = per >= 24;
         const showTags = per >= 18;
         [el.bars, el.tags, el.auxBars].forEach((e) => e.style.setProperty('--gap', gap + 'px'));
-        const isPeople = mode === 'people';
-        el.bars.hidden = isPeople; el.people.hidden = !isPeople;
-        el.chart.classList.toggle('mode-people', isPeople);
-        el.bars.innerHTML = ''; el.tags.innerHTML = ''; el.auxBars.innerHTML = ''; el.people.innerHTML = '';
-        barEls = []; tagEls = []; auxEls = []; personEls = [];
-        pitch = per + gap; personW = per;
+        el.bars.innerHTML = ''; el.tags.innerHTML = ''; el.auxBars.innerHTML = ''; el.cards.innerHTML = '';
+        barEls = []; tagEls = []; auxEls = []; cardEls = [];
+        pitch = per + gap;
+        const cw = Math.min(per, 72), ch = Math.round(cw * 1.4);
+        cardOff = (per - cw) / 2;
         for (let i = 0; i < n; i++) {
-            if (isPeople) {
-                const p = document.createElement('div');
-                p.className = 'p';
-                p.style.width = per + 'px';
-                p.style.setProperty('--i', i);
-                p.style.setProperty('--hair', HAIR[i % HAIR.length]);
-                p.style.setProperty('--eye', EYE[i % EYE.length]);
-                p.style.setProperty('--rib', RIBBON[i % RIBBON.length]);
-                p.style.setProperty('--rib2', RIBBON[(i + 3) % RIBBON.length]);
-                p.innerHTML = `<div class="fig">${girlSVG(i, state.data[i])}</div>`;
-                p._slot = null; p._held = null; p._d = '';
-                el.people.appendChild(p);
-                personEls.push(p);
+            if (isCards) {
+                const sl = document.createElement('div');
+                sl.className = 'slot';
+                sl.style.cssText = `width:${cw}px;height:${ch}px;transform:translateX(${i * pitch + cardOff}px)`;
+                el.cards.appendChild(sl);
             } else {
                 const b = document.createElement('div');
                 b.className = 'bar';
@@ -1134,15 +1003,28 @@ ${bows}
             t.className = 't';
             el.tags.appendChild(t);
             tagEls.push(t);
-            if (!isPeople) {
+            if (!isCards) {
                 const x = document.createElement('div');
                 x.className = 'bar';
                 el.auxBars.appendChild(x);
                 auxEls.push(x);
             }
         }
+        if (isCards) {
+            // 카드는 슬롯 위에 얹히도록 슬롯을 모두 만든 뒤 추가한다.
+            for (let p = 0; p < n; p++) {
+                const v = state.data[p];
+                const e = document.createElement('div');
+                e.className = 'nc';
+                e.style.cssText = `width:${cw}px;height:${ch}px;--hue:${Math.round((v / maxV) * 280)};--i:${p}`;
+                e.innerHTML = `<b class="num" style="font-size:${Math.max(13, Math.min(26, cw * 0.42))}px">${v}</b><span class="meter"><i style="width:${Math.max(6, (v / maxV) * 100)}%"></i></span>`;
+                e._x = null;
+                el.cards.appendChild(e);
+                cardEls.push(e);
+            }
+        }
         el.tags.style.display = showTags ? 'flex' : 'none';
-        el.aux.hidden = !state.algo.usesAux || isPeople;
+        el.aux.hidden = !state.algo.usesAux || isCards;
         el.legPivot.style.display = state.algo.usesPivot ? '' : 'none';
     }
 
@@ -1159,7 +1041,7 @@ ${bows}
         if (s.pivot >= 0) cls[s.pivot] = 'pivot';
         s.hl.act.forEach((i) => { cls[i] = 'act'; });
 
-        if (mode === 'people') renderPeople(s, cls);
+        if (mode === 'cards') renderCards(s, cls);
         else for (let i = 0; i < n; i++) {
             const b = barEls[i];
             b.style.height = Math.max(2, (s.arr[i] / maxV) * 100) + '%';
@@ -1189,36 +1071,41 @@ ${bows}
         el.play.textContent = state.playing ? '⏸ 일시정지' : state.pos === last ? '↻ 다시 재생' : '▶ 재생';
     }
 
-    // 캐릭터 모드: 사람마다 자리(px)가 바뀌면 그 방향으로 춤추며 이동한다.
-    function renderPeople(s, cls) {
+    // 카드 모드: 자리가 바뀐 카드는 호(arc)를 그리며 이동한다. 오른쪽으로 가는 카드는 높이, 왼쪽으로 가는 카드는 낮게 지나가 서로 부딪히지 않는다.
+    function renderCards(s, cls) {
         const n = s.arr.length;
-        const slotCls = cls.slice();
-        const hs = new Array(n).fill(false);
-        for (let p = 0; p < n; p++) if (s.held[p]) hs[p] = true;
-        const cheer = state.pos === state.steps.length - 1 && n > 1;
-        el.people.classList.toggle('cheer', cheer);
+        const last = state.pos === state.steps.length - 1;
+        el.cards.classList.toggle('done', last && n > 1);
         for (let p = 0; p < n; p++) {
-            const e = personEls[p], slot = s.px[p], held = s.held[p];
-            e.style.transform = `translate(${slot * pitch}px, ${held ? -LIFT : 0}px)`;
-            const base = 'p ' + (slotCls[slot] || '') + (held ? ' held' : '');
-            if (e._slot !== null && (e._slot !== slot || e._held !== held) && !cheer) {
-                // 자리가 바뀐 사람: 춤 애니메이션을 처음부터 다시 시작한다.
-                e.className = base;
-                void e.offsetWidth;
-                e._d = ' d' + ((p + state.pos) % 6);
+            const e = cardEls[p], slot = s.px[p], held = s.held[p];
+            const x = slot * pitch + cardOff;
+            const y = held ? -LIFT : cls[slot] === 'cmp' ? -12 : 0;
+            e.className = 'nc ' + (cls[slot] || '') + (held ? ' held' : '');
+            e.style.transform = `translate(${x}px, ${y}px)`;
+            if (e._x !== null && (e._x !== x || e._y !== y) && state.mdur > 0) {
+                const dx = x - e._x, dist = Math.abs(dx) / pitch;
+                const arc = e._x === x ? 0 : Math.min(80, 28 + dist * 14) * (dx > 0 ? 1 : 0.4);
+                const mid = `translate(${(e._x + x) / 2}px, ${Math.min(e._y, y) - arc}px)`;
+                if (e._anim) e._anim.cancel();
+                e._anim = e.animate(
+                    [{ transform: `translate(${e._x}px, ${e._y}px)` }, { transform: mid, offset: 0.5 }, { transform: `translate(${x}px, ${y}px)` }],
+                    { duration: state.mdur, easing: 'cubic-bezier(.4, 0, .2, 1)' }
+                );
+                if (e._x !== x) {
+                    e.classList.add('moving');
+                    e._anim.onfinish = () => e.classList.remove('moving');
+                }
             }
-            e.className = base + (e._d || '');
-            e._slot = slot; e._held = held;
+            e._x = x; e._y = y;
         }
     }
 
-    // 캐릭터 모드는 숫자판이 보이도록 최대 MAX_PEOPLE개로 제한한다.
+    // 카드 모드는 숫자가 잘 보이도록 최대 MAX_CARDS개로 제한한다.
     function applyModeLimits() {
-        const people = mode === 'people';
-        el.size.max = people ? MAX_PEOPLE : 60;
+        const cards = mode === 'cards';
+        el.size.max = cards ? MAX_CARDS : 60;
         el.sizeVal.textContent = el.size.value;
-        $('customRange').textContent = people ? `2~${MAX_PEOPLE}` : '2~60';
-        $('animSpeedWrap').classList.toggle('on', people);
+        $('customRange').textContent = cards ? `2~${MAX_CARDS}` : '2~60';
     }
 
     function setMode(m) {
@@ -1226,14 +1113,14 @@ ${bows}
         mode = m;
         try { localStorage.setItem('vis-mode', m); } catch (e) { /* 무시 */ }
         $('modeBars').setAttribute('aria-pressed', String(m === 'bars'));
-        $('modePeople').setAttribute('aria-pressed', String(m === 'people'));
+        $('modeCards').setAttribute('aria-pressed', String(m === 'cards'));
         applyModeLimits();
         applySpeed();
-        if (m === 'people' && state.data.length > MAX_PEOPLE) {
-            // 개수가 많으면 같은 데이터 유형으로 10개를 새로 만든다. 직접 입력한 값은 앞 10개만 남긴다.
-            el.size.value = MAX_PEOPLE; el.sizeVal.textContent = MAX_PEOPLE;
-            if (state.pattern === 'custom') setData(state.data.slice(0, MAX_PEOPLE), 'custom');
-            else setData(generate(state.pattern, MAX_PEOPLE), state.pattern);
+        if (m === 'cards' && state.data.length > MAX_CARDS) {
+            // 많으면 같은 유형으로 12개를 새로 만든다. 직접 입력한 값은 앞 20개만 남긴다.
+            if (state.pattern === 'custom') { el.size.value = MAX_CARDS; setData(state.data.slice(0, MAX_CARDS), 'custom'); }
+            else { el.size.value = 12; setData(generate(state.pattern, 12), state.pattern); }
+            el.sizeVal.textContent = el.size.value;
         } else if (state.steps.length) { buildStage(); render(); }
     }
 
@@ -1346,8 +1233,8 @@ ${bows}
         render();
     }
 
-    // 캐릭터 모드에서는 동작이 끝나기 전에 다음 단계로 넘어가지 않도록 동작 길이로 상한을 둔다.
-    const curRate = () => (mode === 'people' && state.mdur > 0 ? Math.min(state.rate, 1000 / state.mdur) : state.rate);
+    // 카드 모드에서는 이동이 끝나기 전에 다음 단계로 넘어가지 않도록 이동 시간으로 상한을 둔다.
+    const curRate = () => (mode === 'cards' && state.mdur > 0 ? Math.min(state.rate, 1000 / state.mdur) : state.rate);
     let raf = 0, lastT = 0, acc = 0;
     function tick(t) {
         if (!state.playing) return;
@@ -1376,12 +1263,8 @@ ${bows}
     function applySpeed() {
         const v = Number(el.speed.value);
         state.rate = 2 * Math.pow(2, v / 12);
-
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const mult = Number(el.animSpeed.value) / 100;
-        el.animSpeedVal.textContent = mult.toFixed(2).replace(/0$/, '') + '×';
-        state.mdur = Math.round(Math.max(120, Math.min(450, 1000 / state.rate)) / mult);
-        document.documentElement.style.setProperty('--mdur', reduce ? '0ms' : state.mdur + 'ms');
+        state.mdur = reduce ? 0 : Math.round(Math.max(130, Math.min(450, 1000 / state.rate)));
         el.speedVal.textContent = `${Math.round(curRate())}단계/초`;
         document.documentElement.style.setProperty('--dur', reduce ? '0ms' : Math.min(180, Math.round(700 / state.rate)) + 'ms');
     }
@@ -1402,9 +1285,8 @@ ${bows}
     $('lastBtn').addEventListener('click', () => { pause(); go(state.steps.length - 1); });
     el.scrub.addEventListener('input', () => { pause(); go(Number(el.scrub.value)); });
     el.speed.addEventListener('input', applySpeed);
-    el.animSpeed.addEventListener('input', applySpeed);
     $('modeBars').addEventListener('click', () => setMode('bars'));
-    $('modePeople').addEventListener('click', () => setMode('people'));
+    $('modeCards').addEventListener('click', () => setMode('cards'));
 
     const regenerate = () => setData(generate(el.pattern.value, Number(el.size.value)), el.pattern.value);
     el.pattern.addEventListener('change', regenerate);
@@ -1413,7 +1295,7 @@ ${bows}
     $('shuffleBtn').addEventListener('click', regenerate);
 
     const applyCustom = () => {
-        const r = parseCustom(el.custom.value, mode === 'people' ? MAX_PEOPLE : 60);
+        const r = parseCustom(el.custom.value, mode === 'cards' ? MAX_CARDS : 60);
         if (r.error) { el.err.textContent = r.error; return; }
         el.size.value = r.nums.length;
         el.sizeVal.textContent = r.nums.length;
@@ -1444,15 +1326,15 @@ ${bows}
     window.__sorting = { ALGOS, record };
 
     $('modeBars').setAttribute('aria-pressed', String(mode === 'bars'));
-    $('modePeople').setAttribute('aria-pressed', String(mode === 'people'));
+    $('modeCards').setAttribute('aria-pressed', String(mode === 'cards'));
     applyModeLimits();
     applySpeed();
     const initial = ALGOS.find((a) => a.id === location.hash.slice(1));
     if (initial) state.algo = initial;
     renderTabs();
     renderCompareTable();
-    if (mode === 'people') { el.size.value = MAX_PEOPLE; el.sizeVal.textContent = MAX_PEOPLE; }
-    setData(generate('random', mode === 'people' ? MAX_PEOPLE : 20), 'random');
+    if (mode === 'cards') { el.size.value = 12; el.sizeVal.textContent = 12; }
+    setData(generate('random', mode === 'cards' ? 12 : 20), 'random');
 })();
 </script>
 </body>
