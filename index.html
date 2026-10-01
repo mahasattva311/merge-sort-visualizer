@@ -223,6 +223,9 @@
         .p.held .fig { filter: drop-shadow(0 6px 5px rgba(0, 0, 0, .25)); }
 
         /* 춤 동작 3종: 점프 / 한 바퀴 회전 / 좌우 스웨이 */
+        .p.cmp .fig { animation: ponder calc(var(--mdur) * 1.4) ease-in-out; } /* 비교 중: 갸우뚱 */
+        .p.held .leg.l { animation: kickL 700ms ease-in-out infinite; } /* 들려 올라가 대롱대롱 */
+        .p.held .leg.r { animation: kickR 700ms ease-in-out infinite; }
         .p.d0 .fig { animation: hop var(--mdur) ease-in-out; }
         .p.d0 .arm.l { animation: armUpL var(--mdur) ease-in-out; } .p.d0 .arm.r { animation: armUpR var(--mdur) ease-in-out; }
         .p.d0 .leg.l { animation: kickL var(--mdur) ease-in-out; } .p.d0 .leg.r { animation: kickR var(--mdur) ease-in-out; }
@@ -231,6 +234,21 @@
         .p.d2 .fig { animation: sway var(--mdur) ease-in-out; }
         .p.d2 .arm.l { animation: armUpR var(--mdur) ease-in-out; } .p.d2 .arm.r { animation: armUpL var(--mdur) ease-in-out; }
         .p.d2 .leg.l { animation: kickR var(--mdur) ease-in-out; } .p.d2 .leg.r { animation: kickL var(--mdur) ease-in-out; }
+        .p.d3 .fig { animation: cartwheel var(--mdur) ease-in-out; }
+        .p.d3 .arm.l { animation: armUpL var(--mdur) ease-in-out; } .p.d3 .arm.r { animation: armUpR var(--mdur) ease-in-out; }
+        .p.d3 .leg.l { animation: kickL var(--mdur) ease-in-out; } .p.d3 .leg.r { animation: kickR var(--mdur) ease-in-out; }
+        .p.d4 .fig { animation: disco var(--mdur) ease-in-out; }
+        .p.d4 .arm.l { animation: pointUp var(--mdur) ease-in-out; }
+        .p.d4 .leg.r { animation: kickR var(--mdur) ease-in-out; }
+        .p.d5 .fig { animation: jelly var(--mdur) ease-in-out; }
+        .p.d5 .arm.l { animation: flapL var(--mdur) ease-in-out; } .p.d5 .arm.r { animation: flapR var(--mdur) ease-in-out; }
+        @keyframes cartwheel { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-30px) rotate(180deg); } 99% { transform: translateY(0) rotate(359deg); } }
+        @keyframes disco { 0%, 100% { transform: skewX(0) translateY(0); } 25% { transform: skewX(-12deg) translateY(-6px); } 50% { transform: skewX(0) translateY(0); } 75% { transform: skewX(12deg) translateY(-6px); } }
+        @keyframes pointUp { 0%, 100% { transform: rotate(10deg); } 20%, 80% { transform: rotate(-175deg); } }
+        @keyframes jelly { 0%, 100% { transform: scale(1, 1); } 20% { transform: scale(1.18, .8); } 45% { transform: translateY(-26px) scale(.88, 1.14); } 70% { transform: scale(1.12, .88); } 85% { transform: translateY(-6px) scale(.97, 1.03); } }
+        @keyframes flapL { 0%, 100% { transform: rotate(10deg); } 25%, 75% { transform: rotate(95deg); } 50% { transform: rotate(40deg); } }
+        @keyframes flapR { 0%, 100% { transform: rotate(-10deg); } 25%, 75% { transform: rotate(-95deg); } 50% { transform: rotate(-40deg); } }
+        @keyframes ponder { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-7deg); } 70% { transform: rotate(7deg); } }
         @keyframes hop { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(0) scaleY(.93); } 50% { transform: translateY(-34px) scaleY(1.04); } 85% { transform: translateY(0) scaleY(.95); } }
         @keyframes twirl { 0%, 100% { transform: translateY(0) rotateY(0); } 50% { transform: translateY(-22px) rotateY(180deg); } 99% { transform: translateY(0) rotateY(359deg); } }
         @keyframes sway { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-13deg) translateY(-8px); } 75% { transform: rotate(13deg) translateY(-8px); } }
@@ -1132,7 +1150,7 @@
                 // 자리가 바뀐 사람: 춤 애니메이션을 처음부터 다시 시작한다.
                 e.className = base;
                 void e.offsetWidth;
-                e._d = ' d' + ((p + state.pos) % 3);
+                e._d = ' d' + ((p + state.pos) % 6);
             }
             e.className = base + (e._d || '');
             e._slot = slot; e._held = held;
