@@ -168,97 +168,83 @@
 
 
         /* ---------- Visualization mode switch / characters ---------- */
-        .vis-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; }
+        .bars[hidden], .people[hidden] { display: none; }
+        .vis-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 10px; }
         .vis-switch .lbl { font-size: .8rem; font-weight: 700; color: var(--muted); margin-right: 2px; }
+        .vis-switch .anim-speed { display: none; align-items: center; gap: 8px; margin-left: auto; font-size: .8rem; font-weight: 700; color: var(--muted); }
+        .vis-switch .anim-speed.on { display: flex; }
+        .vis-switch .anim-speed .val { min-width: 3em; }
         button.btn.seg[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-        .people {
-            position: relative; height: 390px; padding-top: 70px; box-sizing: border-box; border-bottom: 2px solid var(--border); overflow-x: clip;
-            --mdur: 300ms;
-        }
+        .people { position: relative; height: 340px; padding-top: 110px; border-bottom: 2px solid var(--border); overflow: hidden; }
         .p {
-            position: absolute; bottom: 0; left: 0;
+            position: absolute; bottom: 0; left: 0; perspective: 700px;
             transition: transform var(--mdur) cubic-bezier(.4, 0, .2, 1), opacity var(--mdur) ease;
             will-change: transform;
         }
-        .p.dim { opacity: .35; }
+        .p.dim { opacity: .38; }
         .p.held { z-index: 3; }
-        .p.moving { z-index: 2; }
-        .p .fig { position: relative; height: 100%; width: min(100%, 46px); margin: 0 auto; display: flex; flex-direction: column; align-items: center; transform-origin: 50% 100%; }
-        .p .v {
-            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 2px;
-            font-size: .72rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap;
-        }
-        .p.cmp .v, .p.act .v, .p.pivot .v { color: var(--text); }
-        .p .head {
-            flex: none; width: min(78%, 26px); aspect-ratio: 1; border-radius: 50%; background: var(--skin, #f1c9a5);
-            border: 2px solid transparent; position: relative; box-sizing: border-box;
-        }
-        .p .head::before { /* 머리카락 */
-            content: ""; position: absolute; left: -2px; right: -2px; top: -3px; height: 52%;
-            background: var(--hair, #3a2a20); border-radius: 50% 50% 20% 20% / 90% 90% 30% 30%;
-        }
-        .p .head::after { /* 눈 */
-            content: ""; position: absolute; left: 50%; top: 58%; width: 14%; aspect-ratio: 1; border-radius: 50%;
-            background: #222; transform: translateX(-50%); box-shadow: -140% 0 0 #222, 140% 0 0 #222;
-        }
-        .p .torso {
-            flex: 1.25 1 0; width: 62%; margin-top: 2px; background: var(--shirt, #4f8cff); border-radius: 7px 7px 3px 3px; position: relative;
-        }
-        .p .arm {
-            position: absolute; top: 5%; width: 26%; height: min(82%, 46px); background: var(--shirt, #4f8cff); filter: brightness(.88);
-            border-radius: 99px; transform-origin: 50% 8%;
-        }
-        .p .arm.l { left: -32%; transform: rotate(10deg); }
-        .p .arm.r { right: -32%; transform: rotate(-10deg); }
-        .p .legs { flex: 0 0 36%; width: 62%; display: flex; justify-content: center; gap: 10%; }
-        .p .leg { flex: 0 0 38%; background: var(--pants, #34405c); border-radius: 0 0 4px 4px; transform-origin: 50% 0; }
+        .p .fig { width: min(100%, 112px); margin: 0 auto; transform-origin: 50% 100%; }
+        .p svg { display: block; width: 100%; height: auto; overflow: visible; }
+        .p svg * { transform-box: view-box; }
         .p::after { /* 발밑 상태 표시 */
-            content: ""; position: absolute; left: 50%; bottom: -7px; width: min(100%, 40px); height: 4px; border-radius: 3px;
+            content: ""; position: absolute; left: 50%; bottom: -7px; width: min(90%, 72px); height: 4px; border-radius: 3px;
             transform: translateX(-50%); background: transparent; transition: background-color var(--mdur) ease;
         }
-        .p.cmp::after { background: var(--cmp); } .p.cmp .head { border-color: var(--cmp); }
-        .p.act::after { background: var(--act); } .p.act .head { border-color: var(--act); }
-        .p.pivot::after { background: var(--pivot); } .p.pivot .head { border-color: var(--pivot); }
-        .p.sorted::after { background: var(--done); } .p.sorted .head { border-color: var(--done); }
-        .p.held .fig { filter: drop-shadow(0 6px 5px rgba(0, 0, 0, .25)); }
+        .p { --bc: #9aa3bd; }
+        .p.cmp { --bc: var(--cmp); } .p.act { --bc: var(--act); } .p.pivot { --bc: var(--pivot); } .p.sorted { --bc: var(--done); }
+        .p.cmp::after { background: var(--cmp); } .p.act::after { background: var(--act); }
+        .p.pivot::after { background: var(--pivot); } .p.sorted::after { background: var(--done); }
+        .p.cmp .board, .p.act .board, .p.pivot .board, .p.sorted .board { stroke-width: 3.4; filter: drop-shadow(0 0 3px var(--bc)); }
+        .p.held .fig { filter: drop-shadow(0 8px 6px rgba(0, 0, 0, .28)); }
+        .p .board { stroke: var(--bc); stroke-width: 2.2; transition: stroke var(--mdur) ease; }
 
-        /* 춤 동작 3종: 점프 / 한 바퀴 회전 / 좌우 스웨이 */
-        .p.cmp .fig { animation: ponder calc(var(--mdur) * 1.4) ease-in-out; } /* 비교 중: 갸우뚱 */
+        /* 상시 모션: 눈 깜빡임, 트윈테일/머리카락 살랑 */
+        .p .eyes { transform-origin: 50px 40px; animation: blink 4.6s infinite; animation-delay: calc(var(--i) * -0.7s); }
+        .p .tail.l { transform-origin: 30px 26px; animation: tailIdleL 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * -0.4s); }
+        .p .tail.r { transform-origin: 70px 26px; animation: tailIdleR 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * -0.4s); }
+        .p .hairB { transform-origin: 50px 28px; animation: tailIdleR 3.6s ease-in-out infinite; }
+        .p .leg.l { transform-origin: 44px 124px; } .p .leg.r { transform-origin: 56px 124px; }
+        .p .skirt { transform-origin: 50px 106px; }
+        .p .hold { transform-origin: 50px 90px; }
+        .p .head { transform-origin: 50px 58px; }
+        .p.cmp .head { animation: ponder calc(var(--mdur) * 1.4) ease-in-out; } /* 비교 중: 갸우뚱 */
         .p.held .leg.l { animation: kickL 700ms ease-in-out infinite; } /* 들려 올라가 대롱대롱 */
         .p.held .leg.r { animation: kickR 700ms ease-in-out infinite; }
+
+        /* 이동 중 춤: 몸 전체 동작 6종 + 공통 보조 모션(머리카락·치마·다리·숫자판) */
+        .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .tail.l, .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .hairB { animation: tailL var(--mdur) ease-in-out; }
+        .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .tail.r { animation: tailR var(--mdur) ease-in-out; }
+        .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .skirt { animation: flare var(--mdur) ease-in-out; }
+        .p:is(.d0, .d1, .d2, .d3, .d4, .d5) .hold { animation: holdBob var(--mdur) ease-in-out; }
+        .p:is(.d0, .d3, .d5) .leg.l, .p.d2 .leg.r, .p.d4 .leg.l { animation: kickL var(--mdur) ease-in-out; }
+        .p:is(.d0, .d3, .d5) .leg.r, .p.d2 .leg.l, .p.d4 .leg.r { animation: kickR var(--mdur) ease-in-out; }
         .p.d0 .fig { animation: hop var(--mdur) ease-in-out; }
-        .p.d0 .arm.l { animation: armUpL var(--mdur) ease-in-out; } .p.d0 .arm.r { animation: armUpR var(--mdur) ease-in-out; }
-        .p.d0 .leg.l { animation: kickL var(--mdur) ease-in-out; } .p.d0 .leg.r { animation: kickR var(--mdur) ease-in-out; }
         .p.d1 .fig { animation: twirl var(--mdur) ease-in-out; }
-        .p.d1 .arm.l { animation: armUpL var(--mdur) ease-in-out; } .p.d1 .arm.r { animation: armUpR var(--mdur) ease-in-out; }
         .p.d2 .fig { animation: sway var(--mdur) ease-in-out; }
-        .p.d2 .arm.l { animation: armUpR var(--mdur) ease-in-out; } .p.d2 .arm.r { animation: armUpL var(--mdur) ease-in-out; }
-        .p.d2 .leg.l { animation: kickR var(--mdur) ease-in-out; } .p.d2 .leg.r { animation: kickL var(--mdur) ease-in-out; }
         .p.d3 .fig { animation: cartwheel var(--mdur) ease-in-out; }
-        .p.d3 .arm.l { animation: armUpL var(--mdur) ease-in-out; } .p.d3 .arm.r { animation: armUpR var(--mdur) ease-in-out; }
-        .p.d3 .leg.l { animation: kickL var(--mdur) ease-in-out; } .p.d3 .leg.r { animation: kickR var(--mdur) ease-in-out; }
         .p.d4 .fig { animation: disco var(--mdur) ease-in-out; }
-        .p.d4 .arm.l { animation: pointUp var(--mdur) ease-in-out; }
-        .p.d4 .leg.r { animation: kickR var(--mdur) ease-in-out; }
         .p.d5 .fig { animation: jelly var(--mdur) ease-in-out; }
-        .p.d5 .arm.l { animation: flapL var(--mdur) ease-in-out; } .p.d5 .arm.r { animation: flapR var(--mdur) ease-in-out; }
-        @keyframes cartwheel { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-30px) rotate(180deg); } 99% { transform: translateY(0) rotate(359deg); } }
-        @keyframes disco { 0%, 100% { transform: skewX(0) translateY(0); } 25% { transform: skewX(-12deg) translateY(-6px); } 50% { transform: skewX(0) translateY(0); } 75% { transform: skewX(12deg) translateY(-6px); } }
-        @keyframes pointUp { 0%, 100% { transform: rotate(10deg); } 20%, 80% { transform: rotate(-175deg); } }
-        @keyframes jelly { 0%, 100% { transform: scale(1, 1); } 20% { transform: scale(1.18, .8); } 45% { transform: translateY(-26px) scale(.88, 1.14); } 70% { transform: scale(1.12, .88); } 85% { transform: translateY(-6px) scale(.97, 1.03); } }
-        @keyframes flapL { 0%, 100% { transform: rotate(10deg); } 25%, 75% { transform: rotate(95deg); } 50% { transform: rotate(40deg); } }
-        @keyframes flapR { 0%, 100% { transform: rotate(-10deg); } 25%, 75% { transform: rotate(-95deg); } 50% { transform: rotate(-40deg); } }
+        @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
+        @keyframes tailIdleL { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(3deg); } }
+        @keyframes tailIdleR { 0%, 100% { transform: rotate(2deg); } 50% { transform: rotate(-3deg); } }
+        @keyframes tailL { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(22deg); } 65% { transform: rotate(-14deg); } }
+        @keyframes tailR { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-22deg); } 65% { transform: rotate(14deg); } }
+        @keyframes flare { 0%, 100% { transform: scaleX(1); } 45% { transform: scaleX(1.16) scaleY(.96); } }
+        @keyframes holdBob { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-4px) rotate(-5deg); } 70% { transform: translateY(2px) rotate(5deg); } }
         @keyframes ponder { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-7deg); } 70% { transform: rotate(7deg); } }
-        @keyframes hop { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(0) scaleY(.93); } 50% { transform: translateY(-34px) scaleY(1.04); } 85% { transform: translateY(0) scaleY(.95); } }
-        @keyframes twirl { 0%, 100% { transform: translateY(0) rotateY(0); } 50% { transform: translateY(-22px) rotateY(180deg); } 99% { transform: translateY(0) rotateY(359deg); } }
-        @keyframes sway { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-13deg) translateY(-8px); } 75% { transform: rotate(13deg) translateY(-8px); } }
-        @keyframes armUpL { 0%, 100% { transform: rotate(10deg); } 50% { transform: rotate(150deg); } }
-        @keyframes armUpR { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(-150deg); } }
-        @keyframes kickL { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(28deg); } }
-        @keyframes kickR { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-28deg); } }
-        .people.cheer .p .fig { animation: hop 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 40ms); }
-        .people.cheer .p .arm.l { animation: armUpL 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 40ms); }
-        .people.cheer .p .arm.r { animation: armUpR 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 40ms); }
+        @keyframes hop { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(0) scaleY(.94); } 50% { transform: translateY(-38px) scaleY(1.03); } 85% { transform: translateY(0) scaleY(.96); } }
+        @keyframes twirl { 0%, 100% { transform: translateY(0) rotateY(0); } 50% { transform: translateY(-24px) rotateY(180deg); } 99% { transform: translateY(0) rotateY(359deg); } }
+        @keyframes sway { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-11deg) translateY(-8px); } 75% { transform: rotate(11deg) translateY(-8px); } }
+        @keyframes cartwheel { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-34px) rotate(180deg); } 99% { transform: translateY(0) rotate(359deg); } }
+        @keyframes disco { 0%, 100% { transform: skewX(0) translateY(0); } 25% { transform: skewX(-10deg) translateY(-7px); } 50% { transform: skewX(0) translateY(0); } 75% { transform: skewX(10deg) translateY(-7px); } }
+        @keyframes jelly { 0%, 100% { transform: scale(1, 1); } 20% { transform: scale(1.12, .86); } 45% { transform: translateY(-30px) scale(.92, 1.1); } 70% { transform: scale(1.08, .92); } 85% { transform: translateY(-6px) scale(.98, 1.02); } }
+        @keyframes kickL { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(26deg); } }
+        @keyframes kickR { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-26deg); } }
+        .people.cheer .p .fig { animation: hop 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
+        .people.cheer .p .tail.l, .people.cheer .p .hairB { animation: tailL 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
+        .people.cheer .p .tail.r { animation: tailR 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
+        .people.cheer .p .skirt { animation: flare 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
+        .people.cheer .p .hold { animation: holdBob 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
         .legend .note-people { display: none; }
         .chart.mode-people ~ .legend .note-people { display: inline; }
 
@@ -339,14 +325,14 @@
             .info-grid { grid-template-columns: 1fr; }
             .card { padding: 16px; }
             .bars { height: 260px; }
-            .people { height: 350px; }
+            .people { height: 290px; padding-top: 90px; }
             .hero { padding-top: 36px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
             .bar, .tab, .p { transition: none; }
-            .p .fig, .p .arm, .p .leg { animation: none !important; }
+            .p *, .p .fig { animation: none !important; }
         }
     </style>
 </head>
@@ -392,7 +378,7 @@
                     </span>
                 </label>
                 <button class="btn" id="shuffleBtn" type="button">🔀 새 데이터</button>
-                <label class="field grow">직접 입력 (쉼표/공백으로 구분, 2~60개, 1~999)
+                <label class="field grow">직접 입력 (쉼표/공백으로 구분, <span id="customRange">2~60</span>개, 1~999)
                     <span class="row">
                         <input type="text" id="custom" placeholder="예: 38, 27, 43, 3, 9, 82, 10" autocomplete="off">
                         <button class="btn" id="applyBtn" type="button">적용</button>
@@ -404,7 +390,11 @@
             <div class="vis-switch" role="group" aria-label="시각화 방식">
                 <span class="lbl">시각화</span>
                 <button class="btn seg" type="button" id="modeBars" data-mode="bars" aria-pressed="true">📊 막대 그래프</button>
-                <button class="btn seg" type="button" id="modePeople" data-mode="people" aria-pressed="false">🕺 캐릭터</button>
+                <button class="btn seg" type="button" id="modePeople" data-mode="people" aria-pressed="false">🕺 캐릭터 (최대 10개)</button>
+                <label class="anim-speed" id="animSpeedWrap">동작 속도
+                    <input type="range" id="animSpeed" min="25" max="200" value="100" aria-label="캐릭터 동작 속도">
+                    <span class="val" id="animSpeedVal">1.0×</span>
+                </label>
             </div>
             <div class="chart" id="chart">
                 <div class="bars" id="bars" aria-hidden="true"></div>
@@ -422,7 +412,7 @@
                 <span id="legPivot"><i style="background:var(--pivot)"></i>피벗</span>
                 <span><i style="background:var(--done)"></i>위치 확정</span>
                 <span><i style="background:var(--bar);opacity:.3"></i>현재 작업 범위 밖</span>
-                <span class="note-people">키가 클수록 큰 값 · 위로 들어 올린 사람은 잠시 빼 둔 원소 (임시 변수·병합 중인 값)</span>
+                <span class="note-people">가슴 앞 숫자판이 값 · 위로 들어 올린 소녀는 잠시 빼 둔 원소 (임시 변수·병합 중인 값)</span>
             </div>
 
             <div class="msg" id="msg" aria-live="polite"></div>
@@ -1010,9 +1000,10 @@
 
     const PATTERN_NAME = { random: '무작위', nearly: '거의 정렬됨', reverse: '역순', sorted: '이미 정렬됨', few: '중복 많음', custom: '직접 입력' };
 
-    function parseCustom(text) {
+    const MAX_PEOPLE = 10;
+    function parseCustom(text, max = 60) {
         const parts = text.trim().split(/[\s,]+/).filter(Boolean);
-        if (parts.length < 2 || parts.length > 60) return { error: `숫자는 2~60개여야 합니다. (현재 ${parts.length}개)` };
+        if (parts.length < 2 || parts.length > max) return { error: `숫자는 2~${max}개여야 합니다. (현재 ${parts.length}개)` };
         const nums = parts.map(Number);
         if (nums.some((v) => !Number.isInteger(v) || v < 1 || v > 999)) return { error: '1~999 사이의 정수만 입력할 수 있습니다.' };
         return { nums };
@@ -1024,15 +1015,80 @@
     const el = {
         tabs: $('tabs'), bars: $('bars'), people: $('people'), chart: $('chart'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
         msg: $('msg'), play: $('playBtn'), scrub: $('scrub'), speed: $('speed'), speedVal: $('speedVal'),
-        size: $('size'), sizeVal: $('sizeVal'), pattern: $('pattern'), custom: $('custom'), err: $('err'),
+        animSpeed: $('animSpeed'), animSpeedVal: $('animSpeedVal'), size: $('size'), sizeVal: $('sizeVal'), pattern: $('pattern'), custom: $('custom'), err: $('err'),
         sCmp: $('sCmp'), sSwp: $('sSwp'), sStep: $('sStep'), sState: $('sState'), legPivot: $('legPivot'),
         infoMain: $('infoMain'), infoSide: $('infoSide'), cmpBody: $('cmpBody'), meters: $('meters'), measureNote: $('measureNote')
     };
     let barEls = [], tagEls = [], auxEls = [], maxV = 1, showVal = true;
     let personEls = [], pitch = 0, personW = 0;
-    const PEOPLE_H = 240, LIFT = 64;
-    const SKIN = ['#f6d3b3', '#e8b98e', '#c98f62', '#8d5a3b', '#f1c9a5'];
-    const HAIR = ['#2b1d14', '#6b4226', '#c9a227', '#a33b2a', '#1d1d1d', '#8a8a8a'];
+    const LIFT = 64;
+    // 캐릭터마다 다른 머리색·눈색·리본색·머리 모양(0 트윈테일 / 1 롱 스트레이트 / 2 사이드 포니테일)
+    const HAIR = ['#f48fb1', '#7b4a32', '#262626', '#5c8df6', '#f4cf55', '#d5dde3', '#a070e8', '#e45a5a', '#3fb5a8', '#f5a24b'];
+    const EYE = ['#d8457a', '#8a5a2b', '#3b6fd6', '#2e8f6a', '#c2589e', '#4aa3d8', '#7a45c9', '#c0392b', '#2a7f9e', '#b86a1a'];
+    const RIBBON = ['#e53935', '#43a047', '#fbc02d', '#1e88e5', '#ec407a', '#8e24aa', '#fb8c00', '#00acc1', '#e53935', '#43a047'];
+    const SKIN_TONE = '#fde3d0';
+
+    // 세일러복 미소녀(viewBox 100x190). 가슴 앞 숫자판에 값이 적힌다. 색은 CSS 변수(--hair 등)로 지정.
+    function girlSVG(i, value) {
+        const style = i % 3;
+        const sock = i % 2 ? '#ffffff' : '#27325c';
+        const digits = String(value).length;
+        const fs = digits >= 3 ? 12 : digits === 2 ? 16 : 19;
+        const back = style === 0
+            ? '<path class="tail l" fill="var(--hair)" d="M30 26 C8 34 4 72 11 100 C13 111 25 112 27 101 C29 80 31 60 37 40 Z"/><path class="tail r" fill="var(--hair)" d="M70 26 C92 34 96 72 89 100 C87 111 75 112 73 101 C71 80 69 60 63 40 Z"/>'
+            : style === 1
+                ? '<path class="hairB" fill="var(--hair)" d="M28 30 C18 62 21 104 23 128 Q50 134 77 128 C79 104 82 62 72 30 Z"/>'
+                : '<path class="hairB" fill="var(--hair)" d="M30 30 C24 52 26 68 31 74 L69 74 C74 68 76 52 70 30 Z"/><path class="tail r" fill="var(--hair)" d="M66 24 C96 18 102 64 90 100 C86 112 74 108 77 94 C82 66 74 46 62 38 Z"/>';
+        const bows = style === 0
+            ? '<g fill="var(--rib2)"><path d="M30 26 L20 19 L21 33 Z"/><path d="M30 26 L40 19 L39 33 Z"/><circle cx="30" cy="26" r="3"/><path d="M70 26 L60 19 L61 33 Z"/><path d="M70 26 L80 19 L79 33 Z"/><circle cx="70" cy="26" r="3"/></g>'
+            : style === 1
+                ? '<g fill="var(--rib2)"><path d="M62 17 L53 11 L54 24 Z"/><path d="M62 17 L71 11 L70 24 Z"/><circle cx="62" cy="17" r="3"/></g>'
+                : '<g fill="var(--rib2)"><path d="M68 25 L60 18 L59 31 Z"/><path d="M68 25 L77 19 L77 32 Z"/><circle cx="68" cy="25" r="3"/></g>';
+        return `<svg viewBox="0 0 100 190" aria-hidden="true">
+<ellipse cx="50" cy="178" rx="26" ry="4.5" fill="#000" opacity=".12"/>
+${back}
+<g class="leg l"><rect x="39" y="124" width="10" height="28" fill="${SKIN_TONE}"/><rect x="38.5" y="150" width="11" height="22" rx="2" fill="${sock}"/><rect x="38.5" y="152" width="11" height="2.2" fill="${style === 2 ? '#e53935' : '#ffffff'}" opacity=".9"/><path d="M36 172 Q36 167 43 167 Q51 167 52 173 Q52 178 44 178 L37 178 Q34 178 36 172 Z" fill="#3a2a2a"/></g>
+<g class="leg r"><rect x="51" y="124" width="10" height="28" fill="${SKIN_TONE}"/><rect x="50.5" y="150" width="11" height="22" rx="2" fill="${sock}"/><rect x="50.5" y="152" width="11" height="2.2" fill="${style === 2 ? '#e53935' : '#ffffff'}" opacity=".9"/><path d="M48 173 Q49 167 57 167 Q64 167 64 172 Q66 178 63 178 L56 178 Q48 178 48 173 Z" fill="#3a2a2a"/></g>
+<g class="skirt"><path d="M33 104 L67 104 L79 142 Q50 150 21 142 Z" fill="#2b3a6b"/><path d="M40 105 L33 145 M47 105 L42 147 M53 105 L58 147 M60 105 L67 145" stroke="#1e2a52" stroke-width="1.3" fill="none"/><path d="M22 139 Q50 147 78 139" stroke="#fff" stroke-width="1.6" fill="none"/><path d="M21.5 143 Q50 151 78.5 143" stroke="#fff" stroke-width="1" fill="none" opacity=".8"/></g>
+<path d="M37 62 Q34 86 35 108 L65 108 Q66 86 63 62 Z" fill="#ffffff"/>
+<path d="M35 104 L65 104 L66 109 L34 109 Z" fill="#f2f4fa"/>
+<rect x="45.5" y="52" width="9" height="12" fill="${SKIN_TONE}"/>
+<path d="M34 61 L50 80 L66 61 L73 71 L53 85 L47 85 L27 71 Z" fill="#2b3a6b"/>
+<path d="M31 69 L47.5 83 M69 69 L52.5 83 M35 65 L49 78 M65 65 L51 78" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+<g fill="var(--rib)"><path d="M50 78 L38 71 Q36 78 38 86 Z"/><path d="M50 78 L62 71 Q64 78 62 86 Z"/><path d="M47.5 80 L44 92 L49 89 Z"/><path d="M52.5 80 L56 92 L51 89 Z"/><circle cx="50" cy="78.5" r="3.4"/></g>
+<g class="head">
+<path d="M31 36 C31 21 69 21 69 36 C69 50 60 59 50 59 C40 59 31 50 31 36 Z" fill="${SKIN_TONE}"/>
+<ellipse cx="37" cy="47" rx="4.5" ry="2.4" fill="#ff8fa3" opacity=".45"/><ellipse cx="63" cy="47" rx="4.5" ry="2.4" fill="#ff8fa3" opacity=".45"/>
+<g class="eyes">
+<ellipse cx="41" cy="41" rx="5.8" ry="7" fill="#fff"/><ellipse cx="59" cy="41" rx="5.8" ry="7" fill="#fff"/>
+<ellipse cx="41" cy="42" rx="4.5" ry="6" fill="var(--eye)"/><ellipse cx="59" cy="42" rx="4.5" ry="6" fill="var(--eye)"/>
+<ellipse cx="41" cy="43" rx="2.2" ry="3.4" fill="#1b1b2b"/><ellipse cx="59" cy="43" rx="2.2" ry="3.4" fill="#1b1b2b"/>
+<circle cx="39.2" cy="38.8" r="2" fill="#fff"/><circle cx="57.2" cy="38.8" r="2" fill="#fff"/><circle cx="42.8" cy="46" r="1" fill="#fff"/><circle cx="60.8" cy="46" r="1" fill="#fff"/>
+<path d="M34.5 38 Q41 32.5 47.5 36.5" stroke="#2a2030" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M52.5 36.5 Q59 32.5 65.5 38" stroke="#2a2030" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<path d="M34.5 38 L32.5 36.5 M65.5 38 L67.5 36.5" stroke="#2a2030" stroke-width="1.4" stroke-linecap="round"/>
+</g>
+<path d="M36 31.5 Q41 29 46 30.5 M54 30.5 Q59 29 64 31.5" stroke="var(--hair)" stroke-width="1.3" fill="none" stroke-linecap="round" filter="brightness(.8)"/>
+<path d="M49.4 47 Q50 48.2 50.8 47.4" stroke="#d08a78" stroke-width="1" fill="none" stroke-linecap="round"/>
+<path d="M45.5 51.5 Q50 55 54.5 51.5" stroke="#c0505c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+<path d="M30 37 C26 14 74 14 70 37 C67 30 63 26 58 23 C57 29 53 32 50 31 C47 32 43 29 42 23 C37 26 33 30 30 37 Z" fill="var(--hair)"/>
+<path d="M30 37 C28 47 30 57 34 64 L37 61 C34 53 34 45 35 37 Z" fill="var(--hair)"/><path d="M70 37 C72 47 70 57 66 64 L63 61 C66 53 66 45 65 37 Z" fill="var(--hair)"/>
+<path d="M38 20 Q50 14 62 20" stroke="#fff" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>
+<path d="M50 16 Q57 7 47 3 Q52 9 49 17 Z" fill="var(--hair)"/>
+<path d="M60 22 L68 25 M60 26 L67 29" stroke="#ffd54f" stroke-width="1.8" stroke-linecap="round"/>
+${bows}
+</g>
+<g class="hold">
+<path d="M34 62 L41 66 L36 85 L26 82 Z" fill="#fff"/><path d="M26.5 80.5 L36.5 83.5 L35.7 87 L25.5 84 Z" fill="#2b3a6b"/>
+<path d="M66 62 L59 66 L64 85 L74 82 Z" fill="#fff"/><path d="M73.5 80.5 L63.5 83.5 L64.3 87 L74.5 84 Z" fill="#2b3a6b"/>
+<path d="M26 86 L35 89 L33 102 L27 101 Z" fill="${SKIN_TONE}"/><path d="M74 86 L65 89 L67 102 L73 101 Z" fill="${SKIN_TONE}"/>
+<rect class="board" x="30" y="86" width="40" height="28" rx="3.5" fill="#fffdf5"/>
+<rect x="33" y="89" width="34" height="22" rx="2" fill="none" stroke="#d9d3c0" stroke-width="1"/>
+<text x="50" y="${104 + (fs === 12 ? -0.5 : 0)}" text-anchor="middle" font-size="${fs}" font-weight="800" font-family="system-ui, sans-serif" fill="#25243a">${value}</text>
+<ellipse cx="31.5" cy="100" rx="4.2" ry="5" fill="${SKIN_TONE}"/><ellipse cx="68.5" cy="100" rx="4.2" ry="5" fill="${SKIN_TONE}"/>
+<path d="M33 96.5 Q36 99 33.5 103 M67 96.5 Q64 99 66.5 103" stroke="#e8bfa6" stroke-width="1" fill="none"/>
+</g>
+</svg>`;
+    }
     let mode = 'bars';
     try { if (localStorage.getItem('vis-mode') === 'people') mode = 'people'; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
 
@@ -1057,11 +1113,12 @@
                 p.className = 'p';
                 p.style.width = per + 'px';
                 p.style.setProperty('--i', i);
-                p.style.setProperty('--shirt', `hsl(${Math.round((state.data[i] / maxV) * 300)} 70% 55%)`);
-                p.style.setProperty('--skin', SKIN[i % SKIN.length]);
-                p.style.setProperty('--hair', HAIR[(i * 7 + 3) % HAIR.length]);
-                p.innerHTML = '<div class="fig"><span class="v"></span><i class="head"></i><i class="torso"><i class="arm l"></i><i class="arm r"></i></i><div class="legs"><i class="leg l"></i><i class="leg r"></i></div></div>';
-                p._slot = null; p._held = null;
+                p.style.setProperty('--hair', HAIR[i % HAIR.length]);
+                p.style.setProperty('--eye', EYE[i % EYE.length]);
+                p.style.setProperty('--rib', RIBBON[i % RIBBON.length]);
+                p.style.setProperty('--rib2', RIBBON[(i + 3) % RIBBON.length]);
+                p.innerHTML = `<div class="fig">${girlSVG(i, state.data[i])}</div>`;
+                p._slot = null; p._held = null; p._d = '';
                 el.people.appendChild(p);
                 personEls.push(p);
             } else {
@@ -1142,8 +1199,6 @@
         el.people.classList.toggle('cheer', cheer);
         for (let p = 0; p < n; p++) {
             const e = personEls[p], slot = s.px[p], held = s.held[p];
-            const val = state.data[p], h = Math.max(40, (val / maxV) * PEOPLE_H);
-            if (e._h !== h) { e.style.height = h + 'px'; e._h = h; }
             e.style.transform = `translate(${slot * pitch}px, ${held ? -LIFT : 0}px)`;
             const base = 'p ' + (slotCls[slot] || '') + (held ? ' held' : '');
             if (e._slot !== null && (e._slot !== slot || e._held !== held) && !cheer) {
@@ -1154,16 +1209,32 @@
             }
             e.className = base + (e._d || '');
             e._slot = slot; e._held = held;
-            if (showVal) e.firstChild.firstChild.textContent = val;
         }
     }
 
+    // 캐릭터 모드는 숫자판이 보이도록 최대 MAX_PEOPLE개로 제한한다.
+    function applyModeLimits() {
+        const people = mode === 'people';
+        el.size.max = people ? MAX_PEOPLE : 60;
+        el.sizeVal.textContent = el.size.value;
+        $('customRange').textContent = people ? `2~${MAX_PEOPLE}` : '2~60';
+        $('animSpeedWrap').classList.toggle('on', people);
+    }
+
     function setMode(m) {
+        if (m === mode) return;
         mode = m;
         try { localStorage.setItem('vis-mode', m); } catch (e) { /* 무시 */ }
         $('modeBars').setAttribute('aria-pressed', String(m === 'bars'));
         $('modePeople').setAttribute('aria-pressed', String(m === 'people'));
-        if (state.steps.length) { buildStage(); render(); }
+        applyModeLimits();
+        applySpeed();
+        if (m === 'people' && state.data.length > MAX_PEOPLE) {
+            // 개수가 많으면 같은 데이터 유형으로 10개를 새로 만든다. 직접 입력한 값은 앞 10개만 남긴다.
+            el.size.value = MAX_PEOPLE; el.sizeVal.textContent = MAX_PEOPLE;
+            if (state.pattern === 'custom') setData(state.data.slice(0, MAX_PEOPLE), 'custom');
+            else setData(generate(state.pattern, MAX_PEOPLE), state.pattern);
+        } else if (state.steps.length) { buildStage(); render(); }
     }
 
     function renderTabs() {
@@ -1243,7 +1314,7 @@
      * 7. 제어: 로드 / 재생
      * ===================================================================== */
     function load() {
-        pause();
+        state.playing = false; cancelAnimationFrame(raf); // 스테이지를 다시 만들기 전이라 render()는 부르지 않는다.
         state.steps = record(state.algo, state.data);
         state.pos = 0;
         el.scrub.max = state.steps.length - 1;
@@ -1275,12 +1346,14 @@
         render();
     }
 
+    // 캐릭터 모드에서는 동작이 끝나기 전에 다음 단계로 넘어가지 않도록 동작 길이로 상한을 둔다.
+    const curRate = () => (mode === 'people' && state.mdur > 0 ? Math.min(state.rate, 1000 / state.mdur) : state.rate);
     let raf = 0, lastT = 0, acc = 0;
     function tick(t) {
         if (!state.playing) return;
         const dt = Math.min(100, t - lastT);
         lastT = t;
-        acc += (dt / 1000) * state.rate;
+        acc += (dt / 1000) * curRate();
         const adv = Math.floor(acc);
         if (adv > 0) { acc -= adv; state.pos = Math.min(state.steps.length - 1, state.pos + adv); }
         if (state.pos >= state.steps.length - 1) { state.playing = false; render(); return; }
@@ -1303,9 +1376,13 @@
     function applySpeed() {
         const v = Number(el.speed.value);
         state.rate = 2 * Math.pow(2, v / 12);
-        el.speedVal.textContent = `${Math.round(state.rate)}단계/초`;
+
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        document.documentElement.style.setProperty('--mdur', reduce ? '0ms' : Math.max(120, Math.min(450, Math.round(1000 / state.rate))) + 'ms');
+        const mult = Number(el.animSpeed.value) / 100;
+        el.animSpeedVal.textContent = mult.toFixed(2).replace(/0$/, '') + '×';
+        state.mdur = Math.round(Math.max(120, Math.min(450, 1000 / state.rate)) / mult);
+        document.documentElement.style.setProperty('--mdur', reduce ? '0ms' : state.mdur + 'ms');
+        el.speedVal.textContent = `${Math.round(curRate())}단계/초`;
         document.documentElement.style.setProperty('--dur', reduce ? '0ms' : Math.min(180, Math.round(700 / state.rate)) + 'ms');
     }
 
@@ -1325,6 +1402,7 @@
     $('lastBtn').addEventListener('click', () => { pause(); go(state.steps.length - 1); });
     el.scrub.addEventListener('input', () => { pause(); go(Number(el.scrub.value)); });
     el.speed.addEventListener('input', applySpeed);
+    el.animSpeed.addEventListener('input', applySpeed);
     $('modeBars').addEventListener('click', () => setMode('bars'));
     $('modePeople').addEventListener('click', () => setMode('people'));
 
@@ -1335,7 +1413,7 @@
     $('shuffleBtn').addEventListener('click', regenerate);
 
     const applyCustom = () => {
-        const r = parseCustom(el.custom.value);
+        const r = parseCustom(el.custom.value, mode === 'people' ? MAX_PEOPLE : 60);
         if (r.error) { el.err.textContent = r.error; return; }
         el.size.value = r.nums.length;
         el.sizeVal.textContent = r.nums.length;
@@ -1367,12 +1445,14 @@
 
     $('modeBars').setAttribute('aria-pressed', String(mode === 'bars'));
     $('modePeople').setAttribute('aria-pressed', String(mode === 'people'));
+    applyModeLimits();
     applySpeed();
     const initial = ALGOS.find((a) => a.id === location.hash.slice(1));
     if (initial) state.algo = initial;
     renderTabs();
     renderCompareTable();
-    setData(generate('random', 20), 'random');
+    if (mode === 'people') { el.size.value = MAX_PEOPLE; el.sizeVal.textContent = MAX_PEOPLE; }
+    setData(generate('random', mode === 'people' ? MAX_PEOPLE : 20), 'random');
 })();
 </script>
 </body>
