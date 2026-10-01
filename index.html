@@ -193,6 +193,68 @@
         .legend .note-cards { display: none; }
         .chart.mode-cards ~ .legend .note-cards { display: inline; }
 
+        /* ---------- Structure (tree) view ---------- */
+        .tree-card { margin-top: 14px; background: var(--card-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px 10px; }
+        .tree-card[hidden] { display: none; }
+        .tree-head b { font-size: .95rem; }
+        .tree-head p { font-size: .8rem; color: var(--muted); margin: 2px 0 10px; line-height: 1.5; }
+        .tree-scroll { max-height: 340px; overflow-y: auto; overflow-x: hidden; }
+        .tree { position: relative; }
+        .tree svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+        .tree svg path { stroke: color-mix(in srgb, var(--muted) 45%, transparent); stroke-width: 1.5; fill: none; transition: opacity var(--dur) ease; }
+        .tree svg path.out { opacity: .25; }
+        .tn {
+            position: absolute; display: flex; height: 26px; background: var(--card); border: 1.5px solid var(--border); border-radius: 7px; overflow: hidden;
+            transition: border-color var(--dur) ease, background-color var(--dur) ease, box-shadow var(--dur) ease;
+        }
+        .tn .c { font-style: normal; flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .tn.work { border-color: var(--accent); background: var(--accent-soft); }
+        .tn.merge { border-color: var(--cmp); background: color-mix(in srgb, var(--cmp) 14%, var(--card)); }
+        .tn.split { border-color: var(--pivot); background: color-mix(in srgb, var(--pivot) 10%, var(--card)); }
+        .tn.done { border-color: var(--done); background: color-mix(in srgb, var(--done) 12%, var(--card)); }
+        .tn.cur { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+        .tn .c.cmp { background: var(--cmp); color: #1c2233; }
+        .tn .c.act { background: var(--act); color: #fff; }
+        .tn .c.pivot { background: var(--pivot); color: #fff; }
+        .tree.tiny .tn .c { font-size: 0; }
+        .hn {
+            position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .74rem;
+            background: var(--card); border: 2px solid var(--bar); font-variant-numeric: tabular-nums;
+            transition: border-color var(--dur) ease, background-color var(--dur) ease, opacity var(--dur) ease;
+        }
+        .tree.tiny .hn { font-size: 0; }
+        .hn.cmp { border-color: var(--cmp); background: color-mix(in srgb, var(--cmp) 30%, var(--card)); }
+        .hn.act { border-color: var(--act); background: color-mix(in srgb, var(--act) 28%, var(--card)); }
+        .hn.out { border-color: var(--done); background: color-mix(in srgb, var(--done) 14%, var(--card)); opacity: .5; }
+
+        /* Clawd 모드: 숫자판을 머리에 얹은 Clawd(카드 이동 로직 재사용) */
+        .nc.clawd { display: block; background: none; border: 0; border-radius: 0; box-shadow: none !important; }
+        .nc.clawd svg { display: block; width: 100%; height: 100%; overflow: visible; }
+        .nc.clawd::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 80%; height: 4px; border-radius: 3px; transform: translateX(-50%); background: transparent; }
+        .nc.clawd.cmp::after { background: var(--cmp); } .nc.clawd.act::after { background: var(--act); }
+        .nc.clawd.pivot::after { background: var(--pivot); } .nc.clawd.sorted::after { background: var(--done); }
+        .nc.clawd .blk { fill: var(--card); stroke: var(--st); stroke-width: .35; }
+        .nc.clawd.cmp .blk, .nc.clawd.act .blk, .nc.clawd.pivot .blk, .nc.clawd.sorted .blk { stroke-width: .75; }
+        .nc.clawd .num { fill: var(--text); font-weight: 800; font-family: system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+        .nc.clawd .mt-bg { fill: var(--border); } .nc.clawd .mt { fill: var(--hc); }
+        .nc.clawd .eyes { transform-box: fill-box; transform-origin: 50% 50%; animation: clawdBlink 4.4s infinite; animation-delay: calc(var(--i) * -0.6s); }
+        .nc.clawd .arm, .nc.clawd .foot { transform-box: fill-box; }
+        .nc.clawd .arm.l { transform-origin: 100% 50%; } .nc.clawd .arm.r { transform-origin: 0% 50%; }
+        .nc.clawd .foot { transform-origin: 50% 0%; }
+        .nc.clawd.moving .arm.l { animation: clawdArmL var(--mdur, 300ms) ease-in-out; } .nc.clawd.moving .arm.r { animation: clawdArmR var(--mdur, 300ms) ease-in-out; }
+        .nc.clawd.moving .foot.a { animation: clawdFootA var(--mdur, 300ms) ease-in-out; } .nc.clawd.moving .foot.b { animation: clawdFootB var(--mdur, 300ms) ease-in-out; }
+        .nc.clawd.held .arm.l { transform: rotate(40deg); } .nc.clawd.held .arm.r { transform: rotate(-40deg); }
+        .nc.clawd.held svg { filter: drop-shadow(0 10px 5px rgba(20, 30, 70, .28)); }
+        .nc.clawd.held .foot.a { animation: clawdFootA 600ms ease-in-out infinite; } .nc.clawd.held .foot.b { animation: clawdFootB 600ms ease-in-out infinite; }
+        @keyframes clawdBlink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+        @keyframes clawdArmL { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(55deg); } }
+        @keyframes clawdArmR { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-55deg); } }
+        @keyframes clawdFootA { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-.7px); } 75% { transform: translateY(.3px); } }
+        @keyframes clawdFootB { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(.3px); } 75% { transform: translateY(-.7px); } }
+        .legend .note-clawd { display: none; }
+        .chart.mode-clawd ~ .legend .note-clawd { display: inline; }
+        .chart.mode-clawd ~ .legend .note-cards { display: none; }
+
         .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .8rem; color: var(--muted); }
         .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
 
@@ -271,6 +333,7 @@
             .card { padding: 16px; }
             .bars { height: 260px; }
             .cards { height: 230px; padding-top: 100px; }
+            .tree-scroll { max-height: 280px; }
             .hero { padding-top: 36px; }
         }
 
@@ -278,6 +341,8 @@
             html { scroll-behavior: auto; }
             .bar, .tab, .nc { transition: none; }
             .cards.done .nc { animation: none; }
+            .tn, .hn, .tree svg path { transition: none; }
+            .nc.clawd *, .nc.clawd .eyes { animation: none !important; }
         }
     </style>
 </head>
@@ -336,6 +401,7 @@
                 <span class="lbl">시각화</span>
                 <button class="btn seg" type="button" id="modeBars" aria-pressed="true">📊 막대 그래프</button>
                 <button class="btn seg" type="button" id="modeCards" aria-pressed="false">🃏 숫자 카드 (최대 20개)</button>
+                <button class="btn seg" type="button" id="modeClawd" aria-pressed="false">🦀 Clawd (최대 20개)</button>
             </div>
             <div class="chart" id="chart">
                 <div class="bars" id="bars" aria-hidden="true"></div>
@@ -353,7 +419,13 @@
                 <span id="legPivot"><i style="background:var(--pivot)"></i>피벗</span>
                 <span><i style="background:var(--done)"></i>위치 확정</span>
                 <span><i style="background:var(--bar);opacity:.3"></i>현재 작업 범위 밖</span>
+                <span class="note-clawd">머리 위 숫자판 = 값 · 위로 들어 올린 Clawd = 잠시 빼 둔 원소(임시 변수·병합 중인 값) · 살짝 올라온 Clawd = 비교 중 · 숫자판 아래 막대 = 값의 크기</span>
                 <span class="note-cards">위로 들어 올린 카드 = 잠시 빼 둔 원소(임시 변수·병합 중인 값) · 살짝 올라온 카드 = 비교 중 · 카드 아래 막대 = 값의 크기</span>
+            </div>
+
+            <div class="tree-card" id="treeCard" hidden>
+                <div class="tree-head"><b id="treeTitle"></b><p id="treeHelp"></p></div>
+                <div class="tree-scroll" id="treeScroll"><div class="tree" id="tree" aria-hidden="true"></div></div>
             </div>
 
             <div class="msg" id="msg" aria-live="polite"></div>
@@ -453,6 +525,16 @@
         const sorted = new Array(n).fill(false);
         const c = { a, n, cmp: 0, swp: 0, range: null, pivot: -1, aux: algo.usesAux ? new Array(n).fill(null) : null };
 
+        // 구간 트리(병합·퀵 정렬): 재귀 호출 하나가 노드 하나. 노드 모양(lo, hi, parent, depth)은 불변이라 모든 스냅샷이 공유하고,
+        // 상태(st: work/merge/split/done)와 퀵 정렬의 피벗 위치(pv)만 단계마다 복사한다.
+        const nodes = [], nst = [], npv = [];
+        c.open = (lo, hi, parent, state) => {
+            nodes.push({ lo, hi, parent, depth: parent < 0 ? 0 : nodes[parent].depth + 1 });
+            nst.push(state); npv.push(-1);
+            return nodes.length - 1;
+        };
+        c.nset = (id, state, pv) => { nst[id] = state; if (pv !== undefined) npv[id] = pv; };
+
         // 카드 시각화용 신원 추적: 카드 p는 자리 px[p]에 놓여 있고, 임시로 빼 둔 상태면 held[p]=true.
         // occ[slot]은 그 자리의 카드(없으면 -1). 카드의 값은 val[p] = 처음 값.
         const occ = Array.from({ length: n }, (_, i) => i);
@@ -478,7 +560,8 @@
             hl: { cmp: hl.cmp || [], act: hl.act || [], axc: hl.axc || [] },
             line, msg, tags: tags || {},
             range: c.range && c.range.slice(), pivot: c.pivot, aux: c.aux && c.aux.slice(),
-            cmp: c.cmp, swp: c.swp, px: px.slice(), held: held.slice()
+            cmp: c.cmp, swp: c.swp, px: px.slice(), held: held.slice(),
+            tree: algo.tree === 'range' ? { nodes, n: nodes.length, st: nst.slice(), pv: npv.slice() } : null
         });
 
         c.note = (line, msg, hl, tags) => snap(hl || {}, line, msg, tags);
@@ -713,7 +796,7 @@
         {
             id: 'merge', name: '병합 정렬', en: 'Merge Sort',
             best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(n)', stable: true, inPlace: false,
-            usesAux: true,
+            usesAux: true, tree: 'range',
             summary: '분할 정복의 대표 예입니다. 배열을 반으로 나눠 각각 정렬한 뒤, 정렬된 두 구간을 앞에서부터 비교하며 하나로 합칩니다.',
             how: [
                 '구간을 가운데에서 둘로 나눕니다(원소가 하나가 될 때까지 재귀).',
@@ -770,16 +853,21 @@
                         j++; k++;
                     }
                 };
-                const sort = (lo, hi) => {
+                const sort = (lo, hi, par) => {
+                    const id = c.open(lo, hi, par, lo >= hi ? 'done' : 'work');
                     if (lo >= hi) return;
                     const mid = (lo + hi) >> 1;
                     c.range = [lo, hi];
                     c.note(2, `구간 [${lo}..${hi}]을(를) 가운데(${mid})에서 둘로 나눕니다.`, {}, T([lo, 'lo'], [mid, 'mid'], [hi, 'hi']));
-                    sort(lo, mid);
-                    sort(mid + 1, hi);
+                    sort(lo, mid, id);
+                    sort(mid + 1, hi, id);
+                    c.nset(id, 'merge');
                     merge(lo, mid, hi);
+                    c.nset(id, 'done');
+                    c.range = [lo, hi];
+                    c.note(4, `구간 [${lo}..${hi}] 병합 완료: 이 구간이 정렬되었습니다.`, {}, T([lo, 'lo'], [hi, 'hi']));
                 };
-                sort(0, n - 1);
+                sort(0, n - 1, -1);
             }
         },
 
@@ -787,7 +875,7 @@
         {
             id: 'quick', name: '퀵 정렬', en: 'Quick Sort',
             best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n²)', space: 'O(log n)', stable: false, inPlace: true,
-            usesPivot: true,
+            usesPivot: true, tree: 'range',
             summary: '피벗(기준 원소)을 하나 고른 뒤, 피벗보다 작은 값은 왼쪽 큰 값은 오른쪽으로 나누고(분할) 양쪽을 재귀적으로 정렬합니다.',
             how: [
                 '구간의 마지막 원소를 피벗으로 선택합니다.',
@@ -810,8 +898,9 @@
             ],
             run(c) {
                 const { a } = c;
-                const sort = (lo, hi) => {
+                const sort = (lo, hi, par) => {
                     if (lo > hi) return;
+                    const id = c.open(lo, hi, par, lo === hi ? 'done' : 'work');
                     if (lo === hi) {
                         c.range = [lo, hi];
                         c.mark(lo);
@@ -834,17 +923,19 @@
                     if (i !== hi) c.swap(i, hi, 5, `피벗 ${p}을(를) ${i}번 자리로 옮깁니다.`, T([i, 'i'], [hi, 'P']));
                     c.mark(i);
                     c.pivot = -1;
+                    c.nset(id, 'split', i);
                     c.note(6, `피벗 ${p}의 위치(${i}) 확정! 왼쪽 [${lo}..${i - 1}]과 오른쪽 [${i + 1}..${hi}]를 각각 재귀 정렬합니다.`, {}, T([i, 'P']));
-                    sort(lo, i - 1);
-                    sort(i + 1, hi);
+                    sort(lo, i - 1, id);
+                    sort(i + 1, hi, id);
+                    c.nset(id, 'done');
                 };
-                sort(0, c.n - 1);
+                sort(0, c.n - 1, -1);
             }
         },
 
         /* ---------------- 힙 정렬 ---------------- */
         {
-            id: 'heap', name: '힙 정렬', en: 'Heap Sort',
+            id: 'heap', name: '힙 정렬', en: 'Heap Sort', tree: 'heap',
             best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(1)', stable: false, inPlace: true,
             summary: '배열을 최대 힙(부모 ≥ 자식)으로 만든 뒤, 루트(최댓값)를 맨 뒤로 보내고 힙 크기를 줄여 가며 반복합니다.',
             how: [
@@ -943,6 +1034,7 @@
     const PATTERN_NAME = { random: '무작위', nearly: '거의 정렬됨', reverse: '역순', sorted: '이미 정렬됨', few: '중복 많음', custom: '직접 입력' };
 
     const MAX_CARDS = 20;
+    const isCardLike = (m) => m === 'cards' || m === 'clawd'; // 숫자 카드와 Clawd는 같은 이동·개수 제한을 쓴다.
     function parseCustom(text, max = 60) {
         const parts = text.trim().split(/[\s,]+/).filter(Boolean);
         if (parts.length < 2 || parts.length > max) return { error: `숫자는 2~${max}개여야 합니다. (현재 ${parts.length}개)` };
@@ -955,7 +1047,7 @@
      * 6. 렌더링
      * ===================================================================== */
     const el = {
-        tabs: $('tabs'), bars: $('bars'), cards: $('cards'), chart: $('chart'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
+        tabs: $('tabs'), treeCard: $('treeCard'), tree: $('tree'), treeScroll: $('treeScroll'), bars: $('bars'), cards: $('cards'), chart: $('chart'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
         msg: $('msg'), play: $('playBtn'), scrub: $('scrub'), speed: $('speed'), speedVal: $('speedVal'),
         size: $('size'), sizeVal: $('sizeVal'), pattern: $('pattern'), custom: $('custom'), err: $('err'),
         sCmp: $('sCmp'), sSwp: $('sSwp'), sStep: $('sStep'), sState: $('sState'), legPivot: $('legPivot'),
@@ -965,14 +1057,139 @@
     let cardEls = [], pitch = 0, cardOff = 0;
     const LIFT = 64;
     let mode = 'bars';
-    try { if (localStorage.getItem('vis-mode') === 'cards') mode = 'cards'; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
+    try { const saved = localStorage.getItem('vis-mode'); if (saved === 'cards' || saved === 'clawd') mode = saved; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
+
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const TREE_INFO = {
+        merge: ['병합 정렬 호출 트리', '구간을 반으로 나누는 재귀 호출 구조입니다. 위에서 아래로 분할하고, 아래에서 위로 병합합니다. 칸 안의 숫자는 그 구간의 현재 값이며, 파란 테두리는 분할 중, 주황은 병합 중, 초록은 정렬 완료입니다.'],
+        quick: ['퀵 정렬 파티션 트리', '피벗이 제자리를 찾으면(보라색 칸) 왼쪽·오른쪽 구간이 자식 노드가 됩니다. 칸 안의 숫자는 그 구간의 현재 값입니다. 이미 정렬된 입력처럼 한쪽으로 치우치면 트리가 깊어지는 것을 볼 수 있습니다.'],
+        heap: ['힙 (완전 이진 트리)', '배열의 a[i]는 a[2i+1], a[2i+2]를 자식으로 가집니다. 연한 초록의 흐린 노드는 힙에서 빠져 정렬이 끝난 원소입니다.']
+    };
+    const TREE_ROW = 36, TREE_NODE_H = 26;
+    let treeKind = null, treeEls = [], treeEdges = [], treeSlot = 0, treeMaxD = -1;
+
+    function treeEdge(x1, y1, x2, y2) {
+        const e = document.createElementNS(SVGNS, 'path');
+        const ym = (y1 + y2) / 2;
+        e.setAttribute('d', `M${x1} ${y1} C${x1} ${ym}, ${x2} ${ym}, ${x2} ${y2}`);
+        el.tree.firstChild.appendChild(e);
+        return e;
+    }
+
+    // 구조 보기(병합/퀵: 구간 트리, 힙: 완전 이진 트리)의 뼈대를 만든다. 병합·퀵 노드는 단계가 진행되며 늦게 만들어진다.
+    function buildTree() {
+        treeKind = state.algo.tree || null;
+        el.treeCard.hidden = !treeKind;
+        el.tree.innerHTML = ''; treeEls = []; treeEdges = []; treeMaxD = -1;
+        if (!treeKind) return;
+        const n = state.data.length;
+        const info = TREE_INFO[state.algo.id];
+        $('treeTitle').textContent = info[0]; $('treeHelp').textContent = info[1];
+        el.tree.appendChild(document.createElementNS(SVGNS, 'svg'));
+        const W = el.tree.clientWidth || 600;
+        if (treeKind === 'range') {
+            treeSlot = W / n;
+            el.tree.classList.toggle('tiny', treeSlot < 18);
+            el.tree.style.height = TREE_ROW + 'px';
+            return;
+        }
+        // 힙: 모든 노드를 미리 배치한다.
+        const levels = Math.floor(Math.log2(n)) + 1;
+        const R = Math.max(7, Math.min(15, W / Math.pow(2, levels - 1) / 2 - 2));
+        el.tree.classList.toggle('tiny', R < 11);
+        const rowH = Math.max(2 * R + 14, 44);
+        el.tree.style.height = (levels * rowH) + 'px';
+        const pos = [];
+        for (let i = 0; i < n; i++) {
+            const L = Math.floor(Math.log2(i + 1)), k = i + 1 - Math.pow(2, L);
+            pos.push([(k + 0.5) / Math.pow(2, L) * W, L * rowH + R + 2]);
+        }
+        for (let i = 1; i < n; i++) {
+            const par = (i - 1) >> 1;
+            treeEdges[i] = treeEdge(pos[par][0], pos[par][1], pos[i][0], pos[i][1]);
+        }
+        for (let i = 0; i < n; i++) {
+            const d = document.createElement('div');
+            d.className = 'hn';
+            d.style.cssText = `width:${2 * R}px;height:${2 * R}px;left:${pos[i][0] - R}px;top:${pos[i][1] - R}px`;
+            el.tree.appendChild(d);
+            treeEls.push(d);
+        }
+    }
+
+    function ensureTreeNode(idx, nodes) {
+        if (treeEls[idx]) return;
+        const nd = nodes[idx];
+        const d = document.createElement('div');
+        d.className = 'tn';
+        const left = nd.lo * treeSlot + 1, width = (nd.hi - nd.lo + 1) * treeSlot - 2;
+        d.style.cssText = `left:${left}px;width:${width}px;top:${nd.depth * TREE_ROW}px`;
+        for (let q = nd.lo; q <= nd.hi; q++) d.appendChild(Object.assign(document.createElement('i'), { className: 'c' }));
+        el.tree.appendChild(d);
+        treeEls[idx] = d;
+        if (nd.parent >= 0) {
+            const pn = nodes[nd.parent];
+            const px = pn.lo * treeSlot + 1 + ((pn.hi - pn.lo + 1) * treeSlot - 2) / 2;
+            treeEdges[idx] = treeEdge(px, pn.depth * TREE_ROW + TREE_NODE_H, left + width / 2, nd.depth * TREE_ROW);
+        }
+    }
+
+    function renderTree(s) {
+        if (!treeKind) return;
+        const n = s.arr.length;
+        if (treeKind === 'heap') {
+            for (let i = 0; i < n; i++) {
+                const d = treeEls[i];
+                d.className = 'hn' + (s.sorted[i] ? ' out' : s.hl.act.includes(i) ? ' act' : s.hl.cmp.includes(i) ? ' cmp' : '');
+                if (d._t !== s.arr[i]) { d.textContent = s.arr[i]; d._t = s.arr[i]; }
+                if (i > 0) treeEdges[i].classList.toggle('out', s.sorted[i]);
+            }
+            return;
+        }
+        const t = s.tree;
+        if (!t) return;
+        let cur = -1;
+        if (s.range) for (let k = 0; k < t.n; k++) if (t.nodes[k].lo === s.range[0] && t.nodes[k].hi === s.range[1]) cur = k;
+        let maxD = 0;
+        for (let k = 0; k < treeEls.length || k < t.n; k++) {
+            const shown = k < t.n;
+            if (shown) ensureTreeNode(k, t.nodes);
+            const d = treeEls[k];
+            if (!d) continue;
+            d.style.display = shown ? '' : 'none';
+            if (treeEdges[k]) treeEdges[k].style.display = shown ? '' : 'none';
+            if (!shown) continue;
+            const nd = t.nodes[k];
+            maxD = Math.max(maxD, nd.depth);
+            d.className = 'tn ' + t.st[k] + (k === cur ? ' cur' : '');
+            const cells = d.children;
+            for (let q = nd.lo; q <= nd.hi; q++) {
+                const c = cells[q - nd.lo], v = s.arr[q];
+                if (c._t !== v) { c.textContent = v; c._t = v; }
+                let cc = 'c';
+                if (t.pv[k] === q && (t.st[k] === 'split' || t.st[k] === 'done')) cc += ' pivot';
+                else if (k === cur) cc += s.pivot === q ? ' pivot' : s.hl.act.includes(q) ? ' act' : s.hl.cmp.includes(q) ? ' cmp' : '';
+                if (c.className !== cc) c.className = cc;
+            }
+        }
+        if (maxD !== treeMaxD) {
+            treeMaxD = maxD;
+            el.tree.style.height = ((maxD + 1) * TREE_ROW) + 'px';
+        }
+        if (cur >= 0) {
+            const top = t.nodes[cur].depth * TREE_ROW, vh = el.treeScroll.clientHeight, st = el.treeScroll.scrollTop;
+            if (top + TREE_NODE_H > st + vh) el.treeScroll.scrollTop = top + TREE_NODE_H - vh + 8;
+            else if (top < st) el.treeScroll.scrollTop = top;
+        }
+    }
 
     function buildStage() {
         const n = state.data.length;
         maxV = Math.max(...state.data);
-        const isCards = mode === 'cards';
+        const isCards = isCardLike(mode);
         el.bars.hidden = isCards; el.cards.hidden = !isCards;
-        el.chart.classList.toggle('mode-cards', isCards);
+        el.chart.classList.toggle('mode-cards', mode === 'cards');
+        el.chart.classList.toggle('mode-clawd', mode === 'clawd');
         const w = (isCards ? el.cards : el.bars).clientWidth || 600;
         const gap = n > 40 ? 2 : n > 24 ? 3 : 5;
         const per = (w - gap * (n - 1)) / n;
@@ -982,7 +1199,7 @@
         el.bars.innerHTML = ''; el.tags.innerHTML = ''; el.auxBars.innerHTML = ''; el.cards.innerHTML = '';
         barEls = []; tagEls = []; auxEls = []; cardEls = [];
         pitch = per + gap;
-        const cw = Math.min(per, 72), ch = Math.round(cw * 1.4);
+        const cw = Math.min(per, 72), ch = Math.round(cw * (mode === 'clawd' ? 14.2 / 13 : 1.4));
         cardOff = (per - cw) / 2;
         for (let i = 0; i < n; i++) {
             if (isCards) {
@@ -1015,9 +1232,12 @@
             for (let p = 0; p < n; p++) {
                 const v = state.data[p];
                 const e = document.createElement('div');
-                e.className = 'nc';
+                e._base = mode === 'clawd' ? 'nc clawd' : 'nc';
+                e.className = e._base;
                 e.style.cssText = `width:${cw}px;height:${ch}px;--hue:${Math.round((v / maxV) * 280)};--i:${p}`;
-                e.innerHTML = `<b class="num" style="font-size:${Math.max(13, Math.min(26, cw * 0.42))}px">${v}</b><span class="meter"><i style="width:${Math.max(6, (v / maxV) * 100)}%"></i></span>`;
+                e.innerHTML = mode === 'clawd'
+                    ? clawdSVG(v, maxV)
+                    : `<b class="num" style="font-size:${Math.max(13, Math.min(26, cw * 0.42))}px">${v}</b><span class="meter"><i style="width:${Math.max(6, (v / maxV) * 100)}%"></i></span>`;
                 e._x = null;
                 el.cards.appendChild(e);
                 cardEls.push(e);
@@ -1026,6 +1246,7 @@
         el.tags.style.display = showTags ? 'flex' : 'none';
         el.aux.hidden = !state.algo.usesAux || isCards;
         el.legPivot.style.display = state.algo.usesPivot ? '' : 'none';
+        buildTree();
     }
 
     function render() {
@@ -1041,7 +1262,7 @@
         if (s.pivot >= 0) cls[s.pivot] = 'pivot';
         s.hl.act.forEach((i) => { cls[i] = 'act'; });
 
-        if (mode === 'cards') renderCards(s, cls);
+        if (isCardLike(mode)) renderCards(s, cls);
         else for (let i = 0; i < n; i++) {
             const b = barEls[i];
             b.style.height = Math.max(2, (s.arr[i] / maxV) * 100) + '%';
@@ -1056,6 +1277,7 @@
                 auxEls[i].className = 'bar' + (s.hl.axc.includes(i) ? ' cmp' : '');
             }
         }
+        renderTree(s);
         el.msg.textContent = s.msg;
         el.sCmp.textContent = s.cmp;
         el.sSwp.textContent = s.swp;
@@ -1071,6 +1293,26 @@
         el.play.textContent = state.playing ? '⏸ 일시정지' : state.pos === last ? '↻ 다시 재생' : '▶ 재생';
     }
 
+    // Clawd: 숫자판을 머리에 얹은 픽셀풍 마스코트(viewBox 13x14.2). 외형은 기억에 의존한 근사이며 색은 대략적인 값이다.
+    function clawdSVG(v, max) {
+        const OR = '#D97757', OD = '#B9532F', EYE = '#201511';
+        const d = String(v).length;
+        const fs = d >= 3 ? 3.6 : d === 2 ? 4.8 : 5.6;
+        const mw = Math.max(0.6, (v / max) * 8.2);
+        return `<svg viewBox="0 0 13 14.2" shape-rendering="crispEdges" aria-hidden="true">
+<g class="foot a"><rect x="3" y="11" width="1.4" height="2.8" fill="${OD}"/><rect x="5.2" y="11" width="1.4" height="2.8" fill="${OD}"/></g>
+<g class="foot b"><rect x="7.4" y="11" width="1.4" height="2.8" fill="${OD}"/><rect x="9.6" y="11" width="1.4" height="2.8" fill="${OD}"/></g>
+<g class="arm l"><rect x="0" y="7.9" width="2.4" height="2.1" fill="${OR}"/></g>
+<g class="arm r"><rect x="10.6" y="7.9" width="2.4" height="2.1" fill="${OR}"/></g>
+<rect x="2" y="6" width="9" height="5.2" fill="${OR}"/>
+<rect x="2" y="10.2" width="9" height="1" fill="${OD}" opacity=".55"/>
+<g class="eyes"><rect x="4.3" y="7.3" width="1.1" height="2.1" fill="${EYE}"/><rect x="7.6" y="7.3" width="1.1" height="2.1" fill="${EYE}"/></g>
+<rect class="blk" x="1.2" y="0.3" width="10.6" height="6.1" rx="1" />
+<rect class="mt-bg" x="2.4" y="5.1" width="8.2" height=".7" rx=".3"/><rect class="mt" x="2.4" y="5.1" width="${mw}" height=".7" rx=".3"/>
+<text class="num" x="6.5" y="${2.55 + fs * 0.36}" text-anchor="middle" font-size="${fs}">${v}</text>
+</svg>`;
+    }
+
     // 카드 모드: 자리가 바뀐 카드는 호(arc)를 그리며 이동한다. 오른쪽으로 가는 카드는 높이, 왼쪽으로 가는 카드는 낮게 지나가 서로 부딪히지 않는다.
     function renderCards(s, cls) {
         const n = s.arr.length;
@@ -1080,7 +1322,7 @@
             const e = cardEls[p], slot = s.px[p], held = s.held[p];
             const x = slot * pitch + cardOff;
             const y = held ? -LIFT : cls[slot] === 'cmp' ? -12 : 0;
-            e.className = 'nc ' + (cls[slot] || '') + (held ? ' held' : '');
+            e.className = e._base + ' ' + (cls[slot] || '') + (held ? ' held' : '');
             e.style.transform = `translate(${x}px, ${y}px)`;
             if (e._x !== null && (e._x !== x || e._y !== y) && state.mdur > 0) {
                 const dx = x - e._x, dist = Math.abs(dx) / pitch;
@@ -1102,7 +1344,7 @@
 
     // 카드 모드는 숫자가 잘 보이도록 최대 MAX_CARDS개로 제한한다.
     function applyModeLimits() {
-        const cards = mode === 'cards';
+        const cards = isCardLike(mode);
         el.size.max = cards ? MAX_CARDS : 60;
         el.sizeVal.textContent = el.size.value;
         $('customRange').textContent = cards ? `2~${MAX_CARDS}` : '2~60';
@@ -1114,9 +1356,10 @@
         try { localStorage.setItem('vis-mode', m); } catch (e) { /* 무시 */ }
         $('modeBars').setAttribute('aria-pressed', String(m === 'bars'));
         $('modeCards').setAttribute('aria-pressed', String(m === 'cards'));
+        $('modeClawd').setAttribute('aria-pressed', String(m === 'clawd'));
         applyModeLimits();
         applySpeed();
-        if (m === 'cards' && state.data.length > MAX_CARDS) {
+        if (isCardLike(m) && state.data.length > MAX_CARDS) {
             // 많으면 같은 유형으로 12개를 새로 만든다. 직접 입력한 값은 앞 20개만 남긴다.
             if (state.pattern === 'custom') { el.size.value = MAX_CARDS; setData(state.data.slice(0, MAX_CARDS), 'custom'); }
             else { el.size.value = 12; setData(generate(state.pattern, 12), state.pattern); }
@@ -1234,7 +1477,7 @@
     }
 
     // 카드 모드에서는 이동이 끝나기 전에 다음 단계로 넘어가지 않도록 이동 시간으로 상한을 둔다.
-    const curRate = () => (mode === 'cards' && state.mdur > 0 ? Math.min(state.rate, 1000 / state.mdur) : state.rate);
+    const curRate = () => (isCardLike(mode) && state.mdur > 0 ? Math.min(state.rate, 1000 / state.mdur) : state.rate);
     let raf = 0, lastT = 0, acc = 0;
     function tick(t) {
         if (!state.playing) return;
@@ -1264,6 +1507,7 @@
         const v = Number(el.speed.value);
         state.rate = 2 * Math.pow(2, v / 12);
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        document.documentElement.style.setProperty('--mdur', (reduce ? 0 : Math.round(Math.max(130, Math.min(450, 1000 / state.rate)))) + 'ms');
         state.mdur = reduce ? 0 : Math.round(Math.max(130, Math.min(450, 1000 / state.rate)));
         el.speedVal.textContent = `${Math.round(curRate())}단계/초`;
         document.documentElement.style.setProperty('--dur', reduce ? '0ms' : Math.min(180, Math.round(700 / state.rate)) + 'ms');
@@ -1283,10 +1527,11 @@
     $('prevBtn').addEventListener('click', () => { pause(); go(state.pos - 1); });
     $('firstBtn').addEventListener('click', () => { pause(); go(0); });
     $('lastBtn').addEventListener('click', () => { pause(); go(state.steps.length - 1); });
-    el.scrub.addEventListener('input', () => { pause(); go(Number(el.scrub.value)); });
+    el.scrub.addEventListener('input', () => { const v = Number(el.scrub.value); pause(); go(v); }); // pause()의 render()가 scrub 값을 되돌리기 전에 읽는다
     el.speed.addEventListener('input', applySpeed);
     $('modeBars').addEventListener('click', () => setMode('bars'));
     $('modeCards').addEventListener('click', () => setMode('cards'));
+    $('modeClawd').addEventListener('click', () => setMode('clawd'));
 
     const regenerate = () => setData(generate(el.pattern.value, Number(el.size.value)), el.pattern.value);
     el.pattern.addEventListener('change', regenerate);
@@ -1295,7 +1540,7 @@
     $('shuffleBtn').addEventListener('click', regenerate);
 
     const applyCustom = () => {
-        const r = parseCustom(el.custom.value, mode === 'cards' ? MAX_CARDS : 60);
+        const r = parseCustom(el.custom.value, isCardLike(mode) ? MAX_CARDS : 60);
         if (r.error) { el.err.textContent = r.error; return; }
         el.size.value = r.nums.length;
         el.sizeVal.textContent = r.nums.length;
@@ -1327,14 +1572,15 @@
 
     $('modeBars').setAttribute('aria-pressed', String(mode === 'bars'));
     $('modeCards').setAttribute('aria-pressed', String(mode === 'cards'));
+    $('modeClawd').setAttribute('aria-pressed', String(mode === 'clawd'));
     applyModeLimits();
     applySpeed();
     const initial = ALGOS.find((a) => a.id === location.hash.slice(1));
     if (initial) state.algo = initial;
     renderTabs();
     renderCompareTable();
-    if (mode === 'cards') { el.size.value = 12; el.sizeVal.textContent = 12; }
-    setData(generate('random', mode === 'cards' ? 12 : 20), 'random');
+    if (isCardLike(mode)) { el.size.value = 12; el.sizeVal.textContent = 12; }
+    setData(generate('random', isCardLike(mode) ? 12 : 20), 'random');
 })();
 </script>
 </body>
