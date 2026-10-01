@@ -193,6 +193,40 @@
         .legend .note-cards { display: none; }
         .chart.mode-cards ~ .legend .note-cards { display: inline; }
 
+        /* ---------- Structure (tree) view ---------- */
+        .tree-card { margin-top: 14px; background: var(--card-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px 10px; }
+        .tree-card[hidden] { display: none; }
+        .tree-head b { font-size: .95rem; }
+        .tree-head p { font-size: .8rem; color: var(--muted); margin: 2px 0 10px; line-height: 1.5; }
+        .tree-scroll { max-height: 340px; overflow-y: auto; overflow-x: hidden; }
+        .tree { position: relative; }
+        .tree svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+        .tree svg path { stroke: color-mix(in srgb, var(--muted) 45%, transparent); stroke-width: 1.5; fill: none; transition: opacity var(--dur) ease; }
+        .tree svg path.out { opacity: .25; }
+        .tn {
+            position: absolute; display: flex; height: 26px; background: var(--card); border: 1.5px solid var(--border); border-radius: 7px; overflow: hidden;
+            transition: border-color var(--dur) ease, background-color var(--dur) ease, box-shadow var(--dur) ease;
+        }
+        .tn .c { font-style: normal; flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .tn.work { border-color: var(--accent); background: var(--accent-soft); }
+        .tn.merge { border-color: var(--cmp); background: color-mix(in srgb, var(--cmp) 14%, var(--card)); }
+        .tn.split { border-color: var(--pivot); background: color-mix(in srgb, var(--pivot) 10%, var(--card)); }
+        .tn.done { border-color: var(--done); background: color-mix(in srgb, var(--done) 12%, var(--card)); }
+        .tn.cur { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+        .tn .c.cmp { background: var(--cmp); color: #1c2233; }
+        .tn .c.act { background: var(--act); color: #fff; }
+        .tn .c.pivot { background: var(--pivot); color: #fff; }
+        .tree.tiny .tn .c { font-size: 0; }
+        .hn {
+            position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .74rem;
+            background: var(--card); border: 2px solid var(--bar); font-variant-numeric: tabular-nums;
+            transition: border-color var(--dur) ease, background-color var(--dur) ease, opacity var(--dur) ease;
+        }
+        .tree.tiny .hn { font-size: 0; }
+        .hn.cmp { border-color: var(--cmp); background: color-mix(in srgb, var(--cmp) 30%, var(--card)); }
+        .hn.act { border-color: var(--act); background: color-mix(in srgb, var(--act) 28%, var(--card)); }
+        .hn.out { border-color: var(--done); background: color-mix(in srgb, var(--done) 14%, var(--card)); opacity: .5; }
+
         .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .8rem; color: var(--muted); }
         .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
 
@@ -271,6 +305,7 @@
             .card { padding: 16px; }
             .bars { height: 260px; }
             .cards { height: 230px; padding-top: 100px; }
+            .tree-scroll { max-height: 280px; }
             .hero { padding-top: 36px; }
         }
 
@@ -278,6 +313,7 @@
             html { scroll-behavior: auto; }
             .bar, .tab, .nc { transition: none; }
             .cards.done .nc { animation: none; }
+            .tn, .hn, .tree svg path { transition: none; }
         }
     </style>
 </head>
@@ -354,6 +390,11 @@
                 <span><i style="background:var(--done)"></i>위치 확정</span>
                 <span><i style="background:var(--bar);opacity:.3"></i>현재 작업 범위 밖</span>
                 <span class="note-cards">위로 들어 올린 카드 = 잠시 빼 둔 원소(임시 변수·병합 중인 값) · 살짝 올라온 카드 = 비교 중 · 카드 아래 막대 = 값의 크기</span>
+            </div>
+
+            <div class="tree-card" id="treeCard" hidden>
+                <div class="tree-head"><b id="treeTitle"></b><p id="treeHelp"></p></div>
+                <div class="tree-scroll" id="treeScroll"><div class="tree" id="tree" aria-hidden="true"></div></div>
             </div>
 
             <div class="msg" id="msg" aria-live="polite"></div>
@@ -453,6 +494,16 @@
         const sorted = new Array(n).fill(false);
         const c = { a, n, cmp: 0, swp: 0, range: null, pivot: -1, aux: algo.usesAux ? new Array(n).fill(null) : null };
 
+        // 구간 트리(병합·퀵 정렬): 재귀 호출 하나가 노드 하나. 노드 모양(lo, hi, parent, depth)은 불변이라 모든 스냅샷이 공유하고,
+        // 상태(st: work/merge/split/done)와 퀵 정렬의 피벗 위치(pv)만 단계마다 복사한다.
+        const nodes = [], nst = [], npv = [];
+        c.open = (lo, hi, parent, state) => {
+            nodes.push({ lo, hi, parent, depth: parent < 0 ? 0 : nodes[parent].depth + 1 });
+            nst.push(state); npv.push(-1);
+            return nodes.length - 1;
+        };
+        c.nset = (id, state, pv) => { nst[id] = state; if (pv !== undefined) npv[id] = pv; };
+
         // 카드 시각화용 신원 추적: 카드 p는 자리 px[p]에 놓여 있고, 임시로 빼 둔 상태면 held[p]=true.
         // occ[slot]은 그 자리의 카드(없으면 -1). 카드의 값은 val[p] = 처음 값.
         const occ = Array.from({ length: n }, (_, i) => i);
@@ -478,7 +529,8 @@
             hl: { cmp: hl.cmp || [], act: hl.act || [], axc: hl.axc || [] },
             line, msg, tags: tags || {},
             range: c.range && c.range.slice(), pivot: c.pivot, aux: c.aux && c.aux.slice(),
-            cmp: c.cmp, swp: c.swp, px: px.slice(), held: held.slice()
+            cmp: c.cmp, swp: c.swp, px: px.slice(), held: held.slice(),
+            tree: algo.tree === 'range' ? { nodes, n: nodes.length, st: nst.slice(), pv: npv.slice() } : null
         });
 
         c.note = (line, msg, hl, tags) => snap(hl || {}, line, msg, tags);
@@ -713,7 +765,7 @@
         {
             id: 'merge', name: '병합 정렬', en: 'Merge Sort',
             best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(n)', stable: true, inPlace: false,
-            usesAux: true,
+            usesAux: true, tree: 'range',
             summary: '분할 정복의 대표 예입니다. 배열을 반으로 나눠 각각 정렬한 뒤, 정렬된 두 구간을 앞에서부터 비교하며 하나로 합칩니다.',
             how: [
                 '구간을 가운데에서 둘로 나눕니다(원소가 하나가 될 때까지 재귀).',
@@ -770,16 +822,21 @@
                         j++; k++;
                     }
                 };
-                const sort = (lo, hi) => {
+                const sort = (lo, hi, par) => {
+                    const id = c.open(lo, hi, par, lo >= hi ? 'done' : 'work');
                     if (lo >= hi) return;
                     const mid = (lo + hi) >> 1;
                     c.range = [lo, hi];
                     c.note(2, `구간 [${lo}..${hi}]을(를) 가운데(${mid})에서 둘로 나눕니다.`, {}, T([lo, 'lo'], [mid, 'mid'], [hi, 'hi']));
-                    sort(lo, mid);
-                    sort(mid + 1, hi);
+                    sort(lo, mid, id);
+                    sort(mid + 1, hi, id);
+                    c.nset(id, 'merge');
                     merge(lo, mid, hi);
+                    c.nset(id, 'done');
+                    c.range = [lo, hi];
+                    c.note(4, `구간 [${lo}..${hi}] 병합 완료: 이 구간이 정렬되었습니다.`, {}, T([lo, 'lo'], [hi, 'hi']));
                 };
-                sort(0, n - 1);
+                sort(0, n - 1, -1);
             }
         },
 
@@ -787,7 +844,7 @@
         {
             id: 'quick', name: '퀵 정렬', en: 'Quick Sort',
             best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n²)', space: 'O(log n)', stable: false, inPlace: true,
-            usesPivot: true,
+            usesPivot: true, tree: 'range',
             summary: '피벗(기준 원소)을 하나 고른 뒤, 피벗보다 작은 값은 왼쪽 큰 값은 오른쪽으로 나누고(분할) 양쪽을 재귀적으로 정렬합니다.',
             how: [
                 '구간의 마지막 원소를 피벗으로 선택합니다.',
@@ -810,8 +867,9 @@
             ],
             run(c) {
                 const { a } = c;
-                const sort = (lo, hi) => {
+                const sort = (lo, hi, par) => {
                     if (lo > hi) return;
+                    const id = c.open(lo, hi, par, lo === hi ? 'done' : 'work');
                     if (lo === hi) {
                         c.range = [lo, hi];
                         c.mark(lo);
@@ -834,17 +892,19 @@
                     if (i !== hi) c.swap(i, hi, 5, `피벗 ${p}을(를) ${i}번 자리로 옮깁니다.`, T([i, 'i'], [hi, 'P']));
                     c.mark(i);
                     c.pivot = -1;
+                    c.nset(id, 'split', i);
                     c.note(6, `피벗 ${p}의 위치(${i}) 확정! 왼쪽 [${lo}..${i - 1}]과 오른쪽 [${i + 1}..${hi}]를 각각 재귀 정렬합니다.`, {}, T([i, 'P']));
-                    sort(lo, i - 1);
-                    sort(i + 1, hi);
+                    sort(lo, i - 1, id);
+                    sort(i + 1, hi, id);
+                    c.nset(id, 'done');
                 };
-                sort(0, c.n - 1);
+                sort(0, c.n - 1, -1);
             }
         },
 
         /* ---------------- 힙 정렬 ---------------- */
         {
-            id: 'heap', name: '힙 정렬', en: 'Heap Sort',
+            id: 'heap', name: '힙 정렬', en: 'Heap Sort', tree: 'heap',
             best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(1)', stable: false, inPlace: true,
             summary: '배열을 최대 힙(부모 ≥ 자식)으로 만든 뒤, 루트(최댓값)를 맨 뒤로 보내고 힙 크기를 줄여 가며 반복합니다.',
             how: [
@@ -955,7 +1015,7 @@
      * 6. 렌더링
      * ===================================================================== */
     const el = {
-        tabs: $('tabs'), bars: $('bars'), cards: $('cards'), chart: $('chart'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
+        tabs: $('tabs'), treeCard: $('treeCard'), tree: $('tree'), treeScroll: $('treeScroll'), bars: $('bars'), cards: $('cards'), chart: $('chart'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
         msg: $('msg'), play: $('playBtn'), scrub: $('scrub'), speed: $('speed'), speedVal: $('speedVal'),
         size: $('size'), sizeVal: $('sizeVal'), pattern: $('pattern'), custom: $('custom'), err: $('err'),
         sCmp: $('sCmp'), sSwp: $('sSwp'), sStep: $('sStep'), sState: $('sState'), legPivot: $('legPivot'),
@@ -966,6 +1026,130 @@
     const LIFT = 64;
     let mode = 'bars';
     try { if (localStorage.getItem('vis-mode') === 'cards') mode = 'cards'; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
+
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const TREE_INFO = {
+        merge: ['병합 정렬 호출 트리', '구간을 반으로 나누는 재귀 호출 구조입니다. 위에서 아래로 분할하고, 아래에서 위로 병합합니다. 칸 안의 숫자는 그 구간의 현재 값이며, 파란 테두리는 분할 중, 주황은 병합 중, 초록은 정렬 완료입니다.'],
+        quick: ['퀵 정렬 파티션 트리', '피벗이 제자리를 찾으면(보라색 칸) 왼쪽·오른쪽 구간이 자식 노드가 됩니다. 칸 안의 숫자는 그 구간의 현재 값입니다. 이미 정렬된 입력처럼 한쪽으로 치우치면 트리가 깊어지는 것을 볼 수 있습니다.'],
+        heap: ['힙 (완전 이진 트리)', '배열의 a[i]는 a[2i+1], a[2i+2]를 자식으로 가집니다. 연한 초록의 흐린 노드는 힙에서 빠져 정렬이 끝난 원소입니다.']
+    };
+    const TREE_ROW = 36, TREE_NODE_H = 26;
+    let treeKind = null, treeEls = [], treeEdges = [], treeSlot = 0, treeMaxD = -1;
+
+    function treeEdge(x1, y1, x2, y2) {
+        const e = document.createElementNS(SVGNS, 'path');
+        const ym = (y1 + y2) / 2;
+        e.setAttribute('d', `M${x1} ${y1} C${x1} ${ym}, ${x2} ${ym}, ${x2} ${y2}`);
+        el.tree.firstChild.appendChild(e);
+        return e;
+    }
+
+    // 구조 보기(병합/퀵: 구간 트리, 힙: 완전 이진 트리)의 뼈대를 만든다. 병합·퀵 노드는 단계가 진행되며 늦게 만들어진다.
+    function buildTree() {
+        treeKind = state.algo.tree || null;
+        el.treeCard.hidden = !treeKind;
+        el.tree.innerHTML = ''; treeEls = []; treeEdges = []; treeMaxD = -1;
+        if (!treeKind) return;
+        const n = state.data.length;
+        const info = TREE_INFO[state.algo.id];
+        $('treeTitle').textContent = info[0]; $('treeHelp').textContent = info[1];
+        el.tree.appendChild(document.createElementNS(SVGNS, 'svg'));
+        const W = el.tree.clientWidth || 600;
+        if (treeKind === 'range') {
+            treeSlot = W / n;
+            el.tree.classList.toggle('tiny', treeSlot < 18);
+            el.tree.style.height = TREE_ROW + 'px';
+            return;
+        }
+        // 힙: 모든 노드를 미리 배치한다.
+        const levels = Math.floor(Math.log2(n)) + 1;
+        const R = Math.max(7, Math.min(15, W / Math.pow(2, levels - 1) / 2 - 2));
+        el.tree.classList.toggle('tiny', R < 11);
+        const rowH = Math.max(2 * R + 14, 44);
+        el.tree.style.height = (levels * rowH) + 'px';
+        const pos = [];
+        for (let i = 0; i < n; i++) {
+            const L = Math.floor(Math.log2(i + 1)), k = i + 1 - Math.pow(2, L);
+            pos.push([(k + 0.5) / Math.pow(2, L) * W, L * rowH + R + 2]);
+        }
+        for (let i = 1; i < n; i++) {
+            const par = (i - 1) >> 1;
+            treeEdges[i] = treeEdge(pos[par][0], pos[par][1], pos[i][0], pos[i][1]);
+        }
+        for (let i = 0; i < n; i++) {
+            const d = document.createElement('div');
+            d.className = 'hn';
+            d.style.cssText = `width:${2 * R}px;height:${2 * R}px;left:${pos[i][0] - R}px;top:${pos[i][1] - R}px`;
+            el.tree.appendChild(d);
+            treeEls.push(d);
+        }
+    }
+
+    function ensureTreeNode(idx, nodes) {
+        if (treeEls[idx]) return;
+        const nd = nodes[idx];
+        const d = document.createElement('div');
+        d.className = 'tn';
+        const left = nd.lo * treeSlot + 1, width = (nd.hi - nd.lo + 1) * treeSlot - 2;
+        d.style.cssText = `left:${left}px;width:${width}px;top:${nd.depth * TREE_ROW}px`;
+        for (let q = nd.lo; q <= nd.hi; q++) d.appendChild(Object.assign(document.createElement('i'), { className: 'c' }));
+        el.tree.appendChild(d);
+        treeEls[idx] = d;
+        if (nd.parent >= 0) {
+            const pn = nodes[nd.parent];
+            const px = pn.lo * treeSlot + 1 + ((pn.hi - pn.lo + 1) * treeSlot - 2) / 2;
+            treeEdges[idx] = treeEdge(px, pn.depth * TREE_ROW + TREE_NODE_H, left + width / 2, nd.depth * TREE_ROW);
+        }
+    }
+
+    function renderTree(s) {
+        if (!treeKind) return;
+        const n = s.arr.length;
+        if (treeKind === 'heap') {
+            for (let i = 0; i < n; i++) {
+                const d = treeEls[i];
+                d.className = 'hn' + (s.sorted[i] ? ' out' : s.hl.act.includes(i) ? ' act' : s.hl.cmp.includes(i) ? ' cmp' : '');
+                if (d._t !== s.arr[i]) { d.textContent = s.arr[i]; d._t = s.arr[i]; }
+                if (i > 0) treeEdges[i].classList.toggle('out', s.sorted[i]);
+            }
+            return;
+        }
+        const t = s.tree;
+        if (!t) return;
+        let cur = -1;
+        if (s.range) for (let k = 0; k < t.n; k++) if (t.nodes[k].lo === s.range[0] && t.nodes[k].hi === s.range[1]) cur = k;
+        let maxD = 0;
+        for (let k = 0; k < treeEls.length || k < t.n; k++) {
+            const shown = k < t.n;
+            if (shown) ensureTreeNode(k, t.nodes);
+            const d = treeEls[k];
+            if (!d) continue;
+            d.style.display = shown ? '' : 'none';
+            if (treeEdges[k]) treeEdges[k].style.display = shown ? '' : 'none';
+            if (!shown) continue;
+            const nd = t.nodes[k];
+            maxD = Math.max(maxD, nd.depth);
+            d.className = 'tn ' + t.st[k] + (k === cur ? ' cur' : '');
+            const cells = d.children;
+            for (let q = nd.lo; q <= nd.hi; q++) {
+                const c = cells[q - nd.lo], v = s.arr[q];
+                if (c._t !== v) { c.textContent = v; c._t = v; }
+                let cc = 'c';
+                if (t.pv[k] === q && (t.st[k] === 'split' || t.st[k] === 'done')) cc += ' pivot';
+                else if (k === cur) cc += s.pivot === q ? ' pivot' : s.hl.act.includes(q) ? ' act' : s.hl.cmp.includes(q) ? ' cmp' : '';
+                if (c.className !== cc) c.className = cc;
+            }
+        }
+        if (maxD !== treeMaxD) {
+            treeMaxD = maxD;
+            el.tree.style.height = ((maxD + 1) * TREE_ROW) + 'px';
+        }
+        if (cur >= 0) {
+            const top = t.nodes[cur].depth * TREE_ROW, vh = el.treeScroll.clientHeight, st = el.treeScroll.scrollTop;
+            if (top + TREE_NODE_H > st + vh) el.treeScroll.scrollTop = top + TREE_NODE_H - vh + 8;
+            else if (top < st) el.treeScroll.scrollTop = top;
+        }
+    }
 
     function buildStage() {
         const n = state.data.length;
@@ -1026,6 +1210,7 @@
         el.tags.style.display = showTags ? 'flex' : 'none';
         el.aux.hidden = !state.algo.usesAux || isCards;
         el.legPivot.style.display = state.algo.usesPivot ? '' : 'none';
+        buildTree();
     }
 
     function render() {
@@ -1056,6 +1241,7 @@
                 auxEls[i].className = 'bar' + (s.hl.axc.includes(i) ? ' cmp' : '');
             }
         }
+        renderTree(s);
         el.msg.textContent = s.msg;
         el.sCmp.textContent = s.cmp;
         el.sSwp.textContent = s.swp;
@@ -1283,7 +1469,7 @@
     $('prevBtn').addEventListener('click', () => { pause(); go(state.pos - 1); });
     $('firstBtn').addEventListener('click', () => { pause(); go(0); });
     $('lastBtn').addEventListener('click', () => { pause(); go(state.steps.length - 1); });
-    el.scrub.addEventListener('input', () => { pause(); go(Number(el.scrub.value)); });
+    el.scrub.addEventListener('input', () => { const v = Number(el.scrub.value); pause(); go(v); }); // pause()의 render()가 scrub 값을 되돌리기 전에 읽는다
     el.speed.addEventListener('input', applySpeed);
     $('modeBars').addEventListener('click', () => setMode('bars'));
     $('modeCards').addEventListener('click', () => setMode('cards'));
