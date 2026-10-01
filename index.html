@@ -1,564 +1,1172 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge Sort Visualizer</title>
+    <title>정렬 알고리즘 탐험 – 시각화로 배우는 7가지 정렬</title>
+    <meta name="description" content="버블·선택·삽입·셸·병합·퀵·힙 정렬을 단계별로 시각화하며 비교해 보는 학습 페이지">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg: #f4f5fa;
+            --card: #ffffff;
+            --card-2: #f8f9fd;
+            --text: #1c2233;
+            --muted: #5d667a;
+            --border: #e2e6f0;
+            --accent: #4f5bd5;
+            --accent-soft: #e9ebff;
+            --accent-text: #ffffff;
+            --bar: #7d8cf2;
+            --cmp: #f5a524;
+            --act: #e5484d;
+            --pivot: #9b5de5;
+            --done: #12a594;
+            --good: #12a594;
+            --ok: #d98a00;
+            --bad: #d9363e;
+            --shadow: 0 1px 2px rgba(20, 30, 70, .06), 0 8px 24px rgba(20, 30, 70, .06);
+            --dur: 80ms;
+            --radius: 14px;
         }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f1220;
+                --card: #181c2f;
+                --card-2: #1e2339;
+                --text: #e8eaf4;
+                --muted: #9aa3bd;
+                --border: #2a3050;
+                --accent: #8b97ff;
+                --accent-soft: #272d57;
+                --accent-text: #11142a;
+                --bar: #6672d9;
+                --cmp: #ffb938;
+                --act: #ff6369;
+                --pivot: #b685f5;
+                --done: #2bc4b1;
+                --good: #2bc4b1;
+                --ok: #f0b030;
+                --bad: #ff6a70;
+                --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.65;
         }
 
-        .container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            max-width: 900px;
-            width: 100%;
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 60px; }
+
+        /* ---------- Hero ---------- */
+        .hero { padding: 56px 0 28px; text-align: center; }
+        .hero .eyebrow {
+            display: inline-block; font-size: .8rem; font-weight: 700; letter-spacing: .08em;
+            color: var(--accent); background: var(--accent-soft); padding: 4px 12px; border-radius: 999px;
+        }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.2; margin: 14px 0 12px; letter-spacing: -.02em; }
+        .hero p { max-width: 680px; margin: 0 auto; color: var(--muted); font-size: 1.05rem; }
+
+        .guide {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 28px; text-align: left;
+        }
+        .guide div {
+            background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 14px 16px; font-size: .92rem; box-shadow: var(--shadow);
+        }
+        .guide b { display: block; margin-bottom: 2px; }
+        .guide span { color: var(--muted); }
+
+        /* ---------- Cards / sections ---------- */
+        section { margin-top: 28px; }
+        .card {
+            background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 22px;
+        }
+        h2 { font-size: 1.3rem; margin-bottom: 14px; letter-spacing: -.01em; }
+        h3 { font-size: 1rem; margin: 18px 0 8px; }
+        h3:first-child { margin-top: 0; }
+
+        /* ---------- Algorithm tabs ---------- */
+        .tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        .tab {
+            text-align: left; cursor: pointer; font: inherit; color: inherit;
+            background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 10px 14px;
+            transition: border-color .15s, transform .15s, background .15s;
+        }
+        .tab:hover { transform: translateY(-2px); border-color: var(--accent); }
+        .tab[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+        .tab .n { display: block; font-weight: 700; }
+        .tab .e { display: block; font-size: .78rem; color: var(--muted); }
+        .tab .c { display: block; margin-top: 4px; font-size: .78rem; font-weight: 700; }
+        .tab:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible {
+            outline: 3px solid var(--accent); outline-offset: 2px;
         }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5em;
+        /* ---------- Controls ---------- */
+        .toolbar { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; margin-bottom: 16px; }
+        .field { display: flex; flex-direction: column; gap: 4px; font-size: .82rem; color: var(--muted); font-weight: 600; }
+        .field.grow { flex: 1; min-width: 220px; }
+        .row { display: flex; gap: 8px; align-items: center; }
+        select, input[type="text"] {
+            font: inherit; font-size: .92rem; color: var(--text); background: var(--card-2);
+            border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 10px; min-width: 0;
+        }
+        input[type="text"] { flex: 1; }
+        input[type="range"] { accent-color: var(--accent); cursor: pointer; }
+        .val { color: var(--text); font-variant-numeric: tabular-nums; min-width: 4.5em; font-weight: 700; }
+
+        button.btn {
+            font: inherit; font-weight: 700; font-size: .92rem; cursor: pointer;
+            border: 1.5px solid var(--border); background: var(--card-2); color: var(--text);
+            border-radius: 9px; padding: 8px 14px; transition: background .15s, transform .1s;
+        }
+        button.btn:hover:not(:disabled) { background: var(--accent-soft); }
+        button.btn:active:not(:disabled) { transform: scale(.97); }
+        button.btn:disabled { opacity: .45; cursor: not-allowed; }
+        button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); min-width: 112px; }
+        button.btn.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); }
+        .err { color: var(--bad); font-size: .82rem; min-height: 1.2em; font-weight: 600; }
+
+        /* ---------- Stage ---------- */
+        .chart { background: var(--card-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px 8px; }
+        .bars, .tags, .aux { display: flex; gap: var(--gap, 4px); }
+        .bars { height: 320px; align-items: flex-end; padding-top: 24px; border-bottom: 2px solid var(--border); }
+        .bar {
+            flex: 1; min-width: 0; background: var(--bar); border-radius: 5px 5px 0 0; position: relative;
+            transition: height var(--dur) ease, background-color var(--dur) ease, opacity var(--dur) ease;
+        }
+        .bar .v {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            font-size: .72rem; font-weight: 700; color: var(--muted); padding-bottom: 2px; font-variant-numeric: tabular-nums;
+        }
+        .bar.dim { opacity: .3; }
+        .bar.cmp { background: var(--cmp); }
+        .bar.pivot { background: var(--pivot); }
+        .bar.act { background: var(--act); }
+        .bar.sorted { background: var(--done); }
+        .bar.cmp .v, .bar.act .v, .bar.pivot .v { color: var(--text); }
+
+        .tags { height: 20px; margin-top: 4px; }
+        .tags .t {
+            flex: 1; min-width: 0; text-align: center; font-size: .72rem; font-weight: 800; color: var(--accent);
+            white-space: nowrap; overflow: visible;
+        }
+        .aux-wrap { margin-top: 6px; padding-top: 8px; border-top: 1px dashed var(--border); }
+        .aux-title { font-size: .76rem; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+        .aux { height: 78px; align-items: flex-end; }
+        .aux .bar { background: color-mix(in srgb, var(--bar) 55%, transparent); border-radius: 4px 4px 0 0; }
+        .aux .bar.cmp { background: var(--cmp); }
+        .aux .bar .v { display: none; }
+
+        .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .8rem; color: var(--muted); }
+        .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
+
+        /* ---------- Player ---------- */
+        .player { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .scrub { flex: 1; min-width: 160px; }
+        .scrub input { width: 100%; }
+
+        .msg {
+            margin-top: 14px; padding: 12px 16px; border-left: 4px solid var(--accent); background: var(--card-2);
+            border-radius: 0 10px 10px 0; font-weight: 600; min-height: 3.1em;
         }
 
-        .input-section {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border: 2px solid #e9ecef;
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }
+        .stat { background: var(--card-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; }
+        .stat .l { font-size: .76rem; color: var(--muted); font-weight: 600; }
+        .stat .x { font-size: 1.3rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+        /* ---------- Info ---------- */
+        .info-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; }
+        .info-grid > div { min-width: 0; }
+        .info-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; }
+        .info-head h2 { margin: 0; }
+        .info-head .en { color: var(--muted); font-weight: 600; }
+        .lead { font-size: 1.02rem; }
+        ol.how { padding-left: 1.3em; }
+        ol.how li, ul.pc li { margin: 4px 0; }
+        ul.pc { padding-left: 1.2em; }
+        .pros li::marker { color: var(--good); content: "＋ "; font-weight: 800; }
+        .cons li::marker { color: var(--bad); content: "－ "; font-weight: 800; }
+        .use { margin-top: 14px; padding: 10px 14px; background: var(--accent-soft); border-radius: 10px; font-size: .92rem; }
+
+        .cx { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .cx > div { background: var(--card-2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+        .cx .l { font-size: .74rem; color: var(--muted); font-weight: 600; }
+        .cx .x { font-weight: 800; font-size: 1.05rem; }
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .chip { font-size: .78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); }
+        .good { color: var(--good); } .ok { color: var(--ok); } .bad { color: var(--bad); }
+        .cx-note { font-size: .8rem; color: var(--muted); margin-top: 8px; }
+
+        .code { margin: 0; list-style: none; counter-reset: ln; background: var(--card-2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 0; overflow-x: auto; }
+        .code li {
+            counter-increment: ln; display: flex; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: .82rem; white-space: pre; padding: 1px 12px; border-left: 3px solid transparent;
+        }
+        .code li::before { content: counter(ln); width: 1.8em; flex: none; color: var(--muted); opacity: .7; }
+        .code li.on { background: var(--accent-soft); border-left-color: var(--accent); font-weight: 700; }
+
+        /* ---------- Compare ---------- */
+        .table-scroll { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 640px; }
+        th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { font-size: .78rem; color: var(--muted); font-weight: 700; }
+        td.name button { all: unset; cursor: pointer; font-weight: 700; color: var(--accent); }
+        td.name button:hover { text-decoration: underline; }
+        td.name button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+        tr.cur td { background: var(--accent-soft); }
+
+        .meter-list { display: grid; gap: 10px; margin-top: 8px; }
+        .meter { display: grid; grid-template-columns: 90px 1fr; gap: 10px; align-items: center; font-size: .86rem; }
+        .meter .nm { font-weight: 700; }
+        .meter .tr { display: grid; gap: 3px; }
+        .meter .ln { display: flex; align-items: center; gap: 8px; }
+        .meter .fill { height: 10px; border-radius: 5px; min-width: 2px; }
+        .meter .fill.a { background: var(--cmp); }
+        .meter .fill.b { background: var(--act); }
+        .meter .num { font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .small { font-size: .82rem; color: var(--muted); }
+        .keys { display: inline-block; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .75rem; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; background: var(--card-2); }
+
+        footer { margin-top: 36px; text-align: center; color: var(--muted); font-size: .85rem; }
+
+        @media (max-width: 800px) {
+            .info-grid { grid-template-columns: 1fr; }
+            .card { padding: 16px; }
+            .bars { height: 260px; }
+            .hero { padding-top: 36px; }
         }
 
-        .input-section h2 {
-            color: #495057;
-            margin-bottom: 20px;
-            font-size: 1.3em;
-        }
-
-        .input-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .input-group label {
-            font-size: 0.85em;
-            color: #6c757d;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .input-group input {
-            padding: 10px;
-            border: 2px solid #dee2e6;
-            border-radius: 5px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        button {
-            padding: 12px 30px;
-            font-size: 1em;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-start {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-start:hover:not(:disabled) {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-start:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .btn-reset {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-reset:hover:not(:disabled) {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-
-        .btn-reset:disabled {
-            background: #ddd;
-            cursor: not-allowed;
-        }
-
-        .visualization-section {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border: 2px solid #e9ecef;
-        }
-
-        .visualization-section h2 {
-            color: #495057;
-            margin-bottom: 20px;
-            font-size: 1.3em;
-        }
-
-        .array-container {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 8px;
-            height: 300px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-            margin-bottom: 20px;
-        }
-
-        .array-bar {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-weight: bold;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-            font-size: 0.9em;
-            flex: 1;
-            max-width: 60px;
-            position: relative;
-        }
-
-        .array-bar.sorted {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        }
-
-        .array-bar.comparing {
-            background: #ff6b6b;
-            transform: scale(1.05);
-            box-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
-        }
-
-        .array-bar.merging {
-            background: #ffd93d;
-            transform: scale(1.05);
-            box-shadow: 0 0 10px rgba(255, 217, 61, 0.6);
-        }
-
-        .info-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-
-        .info-section p {
-            color: #495057;
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
-
-        .step-info {
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .stat-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-        }
-
-        .stat-box .label {
-            font-size: 0.85em;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-
-        .stat-box .value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .speed-control {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-top: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-        }
-
-        .speed-control label {
-            font-weight: 600;
-            color: #495057;
-        }
-
-        .speed-control input[type="range"] {
-            flex: 1;
-            cursor: pointer;
-        }
-
-        .speed-value {
-            font-weight: 600;
-            color: #667eea;
-            min-width: 50px;
-            text-align: right;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .input-grid {
-                grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-            }
-
-            .array-container {
-                height: 250px;
-                gap: 5px;
-            }
-
-            .array-bar {
-                max-width: 50px;
-                font-size: 0.8em;
-            }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            .bar, .tab { transition: none; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔄 Merge Sort Visualizer</h1>
+<div class="wrap">
 
-        <div class="input-section">
-            <h2>Enter 10 Numbers</h2>
-            <div class="input-grid" id="inputGrid"></div>
-            <div class="button-group">
-                <button class="btn-start" id="startBtn">Start Sorting</button>
-                <button class="btn-reset" id="resetBtn">Reset</button>
+    <header class="hero">
+        <span class="eyebrow">SORTING ALGORITHMS</span>
+        <h1>정렬 알고리즘 탐험</h1>
+        <p>정렬은 데이터를 정해진 순서로 나열하는 가장 기본적인 알고리즘 문제입니다.
+           일곱 가지 대표 알고리즘이 같은 데이터를 어떻게 다르게 처리하는지 한 단계씩 재생하고, 되감고, 비교해 보세요.</p>
+        <div class="guide">
+            <div><b>작거나 거의 정렬된 데이터</b><span>삽입 정렬이 단순하고 빠릅니다.</span></div>
+            <div><b>최악의 경우도 보장, 안정성 필요</b><span>병합 정렬이 적합합니다.</span></div>
+            <div><b>평균적으로 가장 빠른 범용 정렬</b><span>퀵 정렬 계열이 흔히 쓰입니다.</span></div>
+            <div><b>추가 메모리 없이 최악도 보장</b><span>힙 정렬을 고려해 볼 수 있습니다.</span></div>
+        </div>
+    </header>
+
+    <section aria-labelledby="pick-h">
+        <h2 id="pick-h">1. 알고리즘 선택</h2>
+        <div class="tabs" id="tabs" role="group" aria-label="정렬 알고리즘 선택"></div>
+    </section>
+
+    <section aria-labelledby="vis-h">
+        <div class="card">
+            <h2 id="vis-h">2. 시각화</h2>
+
+            <div class="toolbar">
+                <label class="field">데이터 유형
+                    <select id="pattern">
+                        <option value="random">무작위</option>
+                        <option value="nearly">거의 정렬됨</option>
+                        <option value="reverse">역순</option>
+                        <option value="sorted">이미 정렬됨</option>
+                        <option value="few">중복 많음</option>
+                    </select>
+                </label>
+                <label class="field">개수
+                    <span class="row">
+                        <input type="range" id="size" min="5" max="60" value="20">
+                        <span class="val"><span id="sizeVal">20</span>개</span>
+                    </span>
+                </label>
+                <button class="btn" id="shuffleBtn" type="button">🔀 새 데이터</button>
+                <label class="field grow">직접 입력 (쉼표/공백으로 구분, 2~60개, 1~999)
+                    <span class="row">
+                        <input type="text" id="custom" placeholder="예: 38, 27, 43, 3, 9, 82, 10" autocomplete="off">
+                        <button class="btn" id="applyBtn" type="button">적용</button>
+                    </span>
+                </label>
             </div>
-        </div>
+            <div class="err" id="err" role="alert"></div>
 
-        <div class="speed-control">
-            <label for="speedSlider">Animation Speed:</label>
-            <input type="range" id="speedSlider" min="1" max="100" value="50">
-            <div class="speed-value"><span id="speedValue">50</span>ms</div>
-        </div>
-
-        <div class="visualization-section">
-            <h2>Visualization</h2>
-            <div class="array-container" id="arrayContainer"></div>
-            <div class="info-section">
-                <div class="step-info" id="stepInfo">Ready to sort...</div>
-                <p id="description">Enter 10 numbers and click "Start Sorting" to visualize the merge sort algorithm.</p>
-                <div class="stats">
-                    <div class="stat-box">
-                        <div class="label">Comparisons</div>
-                        <div class="value" id="comparisons">0</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="label">Swaps</div>
-                        <div class="value" id="swaps">0</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="label">Status</div>
-                        <div class="value" id="status">Idle</div>
-                    </div>
+            <div class="chart">
+                <div class="bars" id="bars" aria-hidden="true"></div>
+                <div class="tags" id="tags" aria-hidden="true"></div>
+                <div class="aux-wrap" id="auxWrap" hidden>
+                    <div class="aux-title">보조 배열 (병합 중인 두 구간의 복사본)</div>
+                    <div class="aux" id="aux" aria-hidden="true"></div>
                 </div>
             </div>
+            <div class="legend" aria-hidden="true">
+                <span><i style="background:var(--bar)"></i>대기</span>
+                <span><i style="background:var(--cmp)"></i>비교 중</span>
+                <span><i style="background:var(--act)"></i>교환·쓰기</span>
+                <span id="legPivot"><i style="background:var(--pivot)"></i>피벗</span>
+                <span><i style="background:var(--done)"></i>위치 확정</span>
+                <span><i style="background:var(--bar);opacity:.3"></i>현재 작업 범위 밖</span>
+            </div>
+
+            <div class="msg" id="msg" aria-live="polite"></div>
+
+            <div class="player">
+                <button class="btn" id="firstBtn" type="button" title="처음으로" aria-label="처음으로">⏮</button>
+                <button class="btn" id="prevBtn" type="button" title="이전 단계 (←)" aria-label="이전 단계">◀ 이전</button>
+                <button class="btn primary" id="playBtn" type="button" title="재생/일시정지 (Space)">▶ 재생</button>
+                <button class="btn" id="nextBtn" type="button" title="다음 단계 (→)" aria-label="다음 단계">다음 ▶</button>
+                <button class="btn" id="lastBtn" type="button" title="끝으로" aria-label="끝으로">⏭</button>
+                <label class="scrub"><span class="small">진행도</span>
+                    <input type="range" id="scrub" min="0" max="0" value="0" aria-label="진행도">
+                </label>
+            </div>
+            <div class="toolbar" style="margin:12px 0 0">
+                <label class="field">속도
+                    <span class="row">
+                        <input type="range" id="speed" min="1" max="100" value="55">
+                        <span class="val" id="speedVal"></span>
+                    </span>
+                </label>
+                <span class="small">단축키: <span class="keys">Space</span> 재생/정지 · <span class="keys">←</span> <span class="keys">→</span> 한 단계씩</span>
+            </div>
+
+            <div class="stats">
+                <div class="stat"><div class="l">비교 횟수</div><div class="x" id="sCmp">0</div></div>
+                <div class="stat"><div class="l">교환·쓰기 횟수</div><div class="x" id="sSwp">0</div></div>
+                <div class="stat"><div class="l">단계</div><div class="x" id="sStep">0 / 0</div></div>
+                <div class="stat"><div class="l">상태</div><div class="x" id="sState">대기</div></div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <script>
-        let array = [];
-        let isAnimating = false;
-        let comparisons = 0;
-        let swaps = 0;
+    <section aria-labelledby="info-h">
+        <div class="card">
+            <h2 id="info-h" class="sr" style="position:absolute;left:-9999px">알고리즘 설명</h2>
+            <div class="info-grid">
+                <div id="infoMain"></div>
+                <div id="infoSide"></div>
+            </div>
+        </div>
+    </section>
 
-        const inputGrid = document.getElementById('inputGrid');
-        const arrayContainer = document.getElementById('arrayContainer');
-        const startBtn = document.getElementById('startBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const speedSlider = document.getElementById('speedSlider');
-        const speedValue = document.getElementById('speedValue');
-        const stepInfo = document.getElementById('stepInfo');
-        const description = document.getElementById('description');
-        const comparisonsDisplay = document.getElementById('comparisons');
-        const swapsDisplay = document.getElementById('swaps');
-        const statusDisplay = document.getElementById('status');
+    <section aria-labelledby="cmp-h">
+        <div class="card">
+            <h2 id="cmp-h">3. 한눈에 비교</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr><th>알고리즘</th><th>최선</th><th>평균</th><th>최악</th><th>추가 공간</th><th>안정</th><th>제자리</th></tr>
+                    </thead>
+                    <tbody id="cmpBody"></tbody>
+                </table>
+            </div>
+            <p class="small" style="margin-top:8px">안정 정렬: 값이 같은 원소들의 원래 순서가 유지되는 정렬. 제자리 정렬: 입력 크기에 비례하는 별도 배열 없이 정렬. 표의 값은 이 페이지의 구현 기준입니다.</p>
 
-        // Initialize input grid
-        function initializeInputs() {
-            inputGrid.innerHTML = '';
-            for (let i = 0; i < 10; i++) {
-                const group = document.createElement('div');
-                group.className = 'input-group';
-                group.innerHTML = `
-                    <label>Num ${i + 1}</label>
-                    <input type="number" class="number-input" min="1" max="999" value="${Math.floor(Math.random() * 100) + 1}">
-                `;
-                inputGrid.appendChild(group);
-            }
-        }
+            <h3 style="margin-top:26px">현재 데이터로 직접 측정한 결과</h3>
+            <p class="small" id="measureNote"></p>
+            <div class="meter-list" id="meters"></div>
+            <p class="small" style="margin-top:10px">
+                <span style="color:var(--cmp)">■</span> 비교 횟수 &nbsp; <span style="color:var(--act)">■</span> 교환·쓰기 횟수.
+                교환 1회와 병합의 쓰기 1회를 같은 단위로 센 값이라 알고리즘 간 정확한 비용 비교는 아니며, 경향을 보기 위한 참고용입니다.
+                데이터 유형을 바꿔 보면(예: 이미 정렬됨 ↔ 역순) 알고리즘마다 반응이 크게 달라지는 것을 볼 수 있습니다.
+            </p>
+        </div>
+    </section>
 
-        // Get numbers from input
-        function getNumbersFromInput() {
-            const inputs = document.querySelectorAll('.number-input');
-            const numbers = [];
-            let valid = true;
+    <footer>단일 HTML 파일 · 외부 라이브러리 없음</footer>
+</div>
 
-            inputs.forEach(input => {
-                if (input.value === '' || isNaN(input.value)) {
-                    valid = false;
-                    input.style.borderColor = '#ff6b6b';
-                } else {
-                    input.style.borderColor = '#dee2e6';
-                    numbers.push(parseInt(input.value));
-                }
-            });
+<script>
+(() => {
+    'use strict';
 
-            if (!valid) {
-                alert('Please fill all input fields with valid numbers');
-                return null;
-            }
+    /* =====================================================================
+     * 1. 유틸
+     * ===================================================================== */
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+    const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    // 인덱스 → 라벨 맵. 같은 칸에 여러 라벨이 겹치면 "i/j" 처럼 합친다.
+    const T = (...pairs) => {
+        const o = {};
+        pairs.forEach(([k, v]) => { if (k >= 0) o[k] = o[k] ? o[k] + '/' + v : v; });
+        return o;
+    };
 
-            return numbers;
-        }
+    /* =====================================================================
+     * 2. 기록기: 알고리즘을 끝까지 실행하며 매 단계의 스냅샷을 저장한다.
+     *    재생기는 이 스냅샷 배열을 앞뒤로 이동할 뿐이라 되감기/점프가 자유롭다.
+     * ===================================================================== */
+    function record(algo, data) {
+        const a = data.slice();
+        const n = a.length;
+        const steps = [];
+        const sorted = new Array(n).fill(false);
+        const c = { a, n, cmp: 0, swp: 0, range: null, pivot: -1, aux: algo.usesAux ? new Array(n).fill(null) : null };
 
-        // Display array bars
-        function displayArray(arr, highlighting = {}) {
-            arrayContainer.innerHTML = '';
-            const maxValue = Math.max(...arr);
-
-            arr.forEach((value, index) => {
-                const bar = document.createElement('div');
-                bar.className = 'array-bar';
-                bar.style.height = `${(value / maxValue) * 100}%`;
-                bar.textContent = value;
-
-                if (highlighting.sorted && highlighting.sorted.includes(index)) {
-                    bar.classList.add('sorted');
-                } else if (highlighting.comparing && highlighting.comparing.includes(index)) {
-                    bar.classList.add('comparing');
-                } else if (highlighting.merging && highlighting.merging.includes(index)) {
-                    bar.classList.add('merging');
-                }
-
-                arrayContainer.appendChild(bar);
-            });
-        }
-
-        // Sleep function for animation
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
-        // Get animation speed
-        function getSpeed() {
-            return 101 - parseInt(speedSlider.value);
-        }
-
-        // Merge sort algorithm with visualization
-        async function mergeSort(arr, start = 0, end = arr.length - 1, sorted = []) {
-            if (start === end) {
-                sorted.push(start);
-                return;
-            }
-
-            const mid = Math.floor((start + end) / 2);
-
-            stepInfo.textContent = `Dividing array from index ${start} to ${mid}...`;
-            description.textContent = `Currently dividing the left half of the array`;
-            displayArray(arr, { sorted, merging: [start, mid] });
-            await sleep(getSpeed());
-
-            await mergeSort(arr, start, mid, sorted);
-
-            stepInfo.textContent = `Dividing array from index ${mid + 1} to ${end}...`;
-            description.textContent = `Currently dividing the right half of the array`;
-            displayArray(arr, { sorted, merging: [mid + 1, end] });
-            await sleep(getSpeed());
-
-            await mergeSort(arr, mid + 1, end, sorted);
-
-            await merge(arr, start, mid, end, sorted);
-        }
-
-        // Merge function
-        async function merge(arr, start, mid, end, sorted) {
-            const left = arr.slice(start, mid + 1);
-            const right = arr.slice(mid + 1, end + 1);
-            let i = 0, j = 0, k = start;
-
-            stepInfo.textContent = `Merging arrays from index ${start} to ${end}...`;
-            description.textContent = `Comparing and merging the left and right halves`;
-
-            while (i < left.length && j < right.length) {
-                comparisons++;
-                comparisonsDisplay.textContent = comparisons;
-
-                displayArray(arr, {
-                    sorted,
-                    comparing: [start + i, mid + 1 + j]
-                });
-                await sleep(getSpeed());
-
-                if (left[i] <= right[j]) {
-                    arr[k] = left[i];
-                    i++;
-                } else {
-                    arr[k] = right[j];
-                    j++;
-                    swaps++;
-                    swapsDisplay.textContent = swaps;
-                }
-                k++;
-
-                displayArray(arr, { sorted, merging: [start, k] });
-                await sleep(getSpeed());
-            }
-
-            while (i < left.length) {
-                arr[k] = left[i];
-                i++;
-                k++;
-                displayArray(arr, { sorted, merging: [start, k] });
-                await sleep(getSpeed());
-            }
-
-            while (j < right.length) {
-                arr[k] = right[j];
-                j++;
-                k++;
-                displayArray(arr, { sorted, merging: [start, k] });
-                await sleep(getSpeed());
-            }
-
-            // Mark merged elements as sorted
-            for (let i = start; i <= end; i++) {
-                sorted.push(i);
-            }
-        }
-
-        // Start sorting
-        startBtn.addEventListener('click', async () => {
-            if (isAnimating) return;
-
-            const numbers = getNumbersFromInput();
-            if (!numbers) return;
-
-            array = [...numbers];
-            isAnimating = true;
-            startBtn.disabled = true;
-            resetBtn.disabled = true;
-            comparisons = 0;
-            swaps = 0;
-            comparisonsDisplay.textContent = '0';
-            swapsDisplay.textContent = '0';
-            statusDisplay.textContent = 'Sorting...';
-
-            displayArray(array);
-            await sleep(500);
-
-            try {
-                await mergeSort(array, 0, array.length - 1, []);
-                
-                displayArray(array, { sorted: Array.from({length: array.length}, (_, i) => i) });
-                stepInfo.textContent = '✓ Sorting Complete!';
-                description.textContent = 'All elements have been sorted successfully using merge sort algorithm.';
-                statusDisplay.textContent = 'Complete';
-            } catch (error) {
-                console.error('Sorting error:', error);
-            }
-
-            isAnimating = false;
-            startBtn.disabled = false;
-            resetBtn.disabled = false;
+        // hl: { cmp: 비교 강조, act: 교환/쓰기 강조, axc: 보조 배열 비교 강조 }
+        const snap = (hl, line, msg, tags) => steps.push({
+            arr: a.slice(), sorted: sorted.slice(),
+            hl: { cmp: hl.cmp || [], act: hl.act || [], axc: hl.axc || [] },
+            line, msg, tags: tags || {},
+            range: c.range && c.range.slice(), pivot: c.pivot, aux: c.aux && c.aux.slice(),
+            cmp: c.cmp, swp: c.swp
         });
 
-        // Reset
-        resetBtn.addEventListener('click', () => {
-            if (isAnimating) return;
-            initializeInputs();
-            arrayContainer.innerHTML = '';
-            stepInfo.textContent = 'Ready to sort...';
-            description.textContent = 'Enter 10 numbers and click "Start Sorting" to visualize the merge sort algorithm.';
-            comparisons = 0;
-            swaps = 0;
-            comparisonsDisplay.textContent = '0';
-            swapsDisplay.textContent = '0';
-            statusDisplay.textContent = 'Idle';
-        });
+        c.note = (line, msg, hl, tags) => snap(hl || {}, line, msg, tags);
+        c.count = (idx, line, msg, tags, axc) => { c.cmp++; snap({ cmp: idx, axc }, line, msg, tags); };
+        c.compare = (i, j, line, msg, tags) => { c.count([i, j], line, msg, tags); return a[i] - a[j]; };
+        c.swap = (i, j, line, msg, tags) => {
+            [a[i], a[j]] = [a[j], a[i]]; c.swp++;
+            snap({ act: [i, j] }, line, msg, tags);
+        };
+        c.write = (i, v, line, msg, tags) => { a[i] = v; c.swp++; snap({ act: [i] }, line, msg, tags); };
+        c.mark = (...idx) => idx.forEach((i) => { sorted[i] = true; });
 
-        // Update speed display
-        speedSlider.addEventListener('input', (e) => {
-            speedValue.textContent = e.target.value;
-        });
+        snap({}, -1, `${algo.name}을(를) 시작할 준비가 됐어요. ▶ 재생 또는 "다음" 버튼을 눌러 보세요.`);
+        algo.run(c);
+        sorted.fill(true);
+        c.range = null; c.pivot = -1;
+        snap({}, -1, '✓ 정렬 완료! 모든 원소가 제자리에 확정되었습니다.');
+        return steps;
+    }
 
-        // Initialize on load
-        window.addEventListener('load', initializeInputs);
-    </script>
+    /* =====================================================================
+     * 3. 알고리즘 정의 (실행 코드 + 설명 콘텐츠)
+     * ===================================================================== */
+    const ALGOS = [
+        /* ---------------- 버블 정렬 ---------------- */
+        {
+            id: 'bubble', name: '버블 정렬', en: 'Bubble Sort',
+            best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)', stable: true, inPlace: true,
+            summary: '이웃한 두 원소를 비교해 순서가 틀리면 맞바꾸는 과정을 반복합니다. 한 바퀴를 돌 때마다 가장 큰 값이 거품처럼 맨 뒤로 떠오릅니다.',
+            how: [
+                '맨 앞부터 이웃한 두 원소를 차례로 비교합니다.',
+                '앞의 값이 더 크면 두 원소를 교환합니다.',
+                '한 바퀴가 끝나면 가장 큰 값이 맨 뒤에 확정됩니다.',
+                '확정된 부분을 제외하고 반복합니다. 한 바퀴 동안 교환이 한 번도 없었다면 이미 정렬된 것이므로 일찍 멈춥니다.'
+            ],
+            pros: ['구현이 매우 단순합니다.', '안정 정렬이며 추가 메모리가 필요 없습니다.', '이미 정렬된 입력은 한 바퀴만에 끝납니다(조기 종료 적용 시).'],
+            cons: ['평균·최악 O(n²)이라 데이터가 많아지면 급격히 느려집니다.', '교환 횟수가 많아 비효율적입니다.'],
+            use: '원리를 익히는 학습용으로 적합합니다. 큰 데이터에는 거의 쓰이지 않습니다.',
+            note: '조기 종료(교환이 없으면 중단)를 넣어야 최선이 O(n)이 됩니다.',
+            code: [
+                'for i = 0 to n-2',
+                '  swapped = false',
+                '  for j = 0 to n-2-i',
+                '    if a[j] > a[j+1]',
+                '      swap(a[j], a[j+1]); swapped = true',
+                '  if not swapped: break'
+            ],
+            run(c) {
+                const { a, n } = c;
+                for (let i = 0; i < n - 1; i++) {
+                    let swapped = false;
+                    c.range = [0, n - 1 - i];
+                    c.note(1, `${i + 1}번째 바퀴 시작: 0 ~ ${n - 1 - i} 구간을 훑으며 큰 값을 뒤로 보냅니다.`);
+                    for (let j = 0; j < n - 1 - i; j++) {
+                        const x = a[j], y = a[j + 1];
+                        if (c.compare(j, j + 1, 3, `${x} 와 ${y} 비교`, T([j, 'j'])) > 0) {
+                            c.swap(j, j + 1, 4, `${x} > ${y} 이므로 두 원소를 교환합니다.`, T([j, 'j']));
+                            swapped = true;
+                        }
+                    }
+                    c.mark(n - 1 - i);
+                    if (!swapped) {
+                        c.range = null;
+                        c.note(5, '이번 바퀴에서 교환이 없었으므로 이미 정렬된 상태입니다. 조기 종료!');
+                        return;
+                    }
+                }
+            }
+        },
+
+        /* ---------------- 선택 정렬 ---------------- */
+        {
+            id: 'selection', name: '선택 정렬', en: 'Selection Sort',
+            best: 'O(n²)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)', stable: false, inPlace: true,
+            summary: '아직 정렬되지 않은 구간에서 가장 작은 값을 "선택"해 그 구간의 맨 앞 자리와 교환합니다.',
+            how: [
+                '정렬되지 않은 구간 전체를 훑어 최솟값의 위치를 찾습니다.',
+                '그 최솟값을 구간의 맨 앞 원소와 교환합니다.',
+                '맨 앞 자리가 확정되었으므로 구간을 한 칸 줄입니다.',
+                '구간에 원소가 하나 남을 때까지 반복합니다.'
+            ],
+            pros: ['교환이 최대 n−1번뿐입니다. 쓰기 비용이 큰 환경에서 유리합니다.', '추가 메모리가 필요 없고 구현이 단순합니다.'],
+            cons: ['입력 상태와 상관없이 항상 O(n²)번 비교합니다.', '안정 정렬이 아닙니다. 멀리 있는 원소와 교환하면서 같은 값의 순서가 바뀔 수 있습니다.'],
+            use: '교환(쓰기) 횟수를 최소화해야 하는 특수한 상황의 개념 학습에 좋습니다.',
+            note: '데이터가 이미 정렬되어 있어도 비교 횟수는 줄지 않습니다.',
+            code: [
+                'for i = 0 to n-2',
+                '  min = i',
+                '  for j = i+1 to n-1',
+                '    if a[j] < a[min]: min = j',
+                '  swap(a[i], a[min])'
+            ],
+            run(c) {
+                const { a, n } = c;
+                for (let i = 0; i < n - 1; i++) {
+                    let min = i;
+                    c.range = [i, n - 1];
+                    c.note(1, `${i}번 자리에 들어갈 최솟값을 찾습니다. 우선 a[${i}]=${a[i]}을(를) 후보로 둡니다.`, {}, T([i, 'i'], [min, 'min']));
+                    for (let j = i + 1; j < n; j++) {
+                        const x = a[j], y = a[min];
+                        if (c.compare(j, min, 3, `a[${j}]=${x} 와 현재 최솟값 ${y} 비교`, T([i, 'i'], [min, 'min'], [j, 'j'])) < 0) {
+                            min = j;
+                        }
+                    }
+                    if (min !== i) {
+                        c.swap(i, min, 4, `최솟값 ${a[min]}을(를) ${i}번 자리로 보냅니다(교환).`, T([i, 'i'], [min, 'min']));
+                    } else {
+                        c.note(4, `${a[i]}이(가) 이미 최솟값이므로 교환할 필요가 없습니다.`, { act: [i] }, T([i, 'i']));
+                    }
+                    c.mark(i);
+                }
+            }
+        },
+
+        /* ---------------- 삽입 정렬 ---------------- */
+        {
+            id: 'insertion', name: '삽입 정렬', en: 'Insertion Sort',
+            best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)', stable: true, inPlace: true,
+            summary: '카드 게임에서 손에 든 카드를 정리하듯, 원소를 하나씩 꺼내 이미 정렬된 앞부분의 알맞은 위치에 끼워 넣습니다.',
+            how: [
+                '두 번째 원소부터 차례로 "키(key)"로 꺼냅니다.',
+                '키보다 큰 앞쪽 원소들을 한 칸씩 뒤로 밀어 자리를 만듭니다.',
+                '비워진 자리에 키를 넣습니다.',
+                '마지막 원소까지 반복합니다.'
+            ],
+            pros: ['거의 정렬된 데이터에서 매우 빠릅니다(최선 O(n)).', '안정 정렬이며 제자리 정렬입니다.', '데이터가 들어오는 대로 하나씩 처리할 수 있습니다.', '작은 입력에서는 상수 비용이 낮아 빠른 편입니다.'],
+            cons: ['역순에 가까운 입력에서는 O(n²)이 됩니다.', '원소를 한 칸씩 밀기 때문에 이동 횟수가 많습니다.'],
+            use: '작은 구간의 정렬에 자주 쓰이며, 병합·퀵 정렬과 결합한 하이브리드 정렬의 구성 요소로 활용되곤 합니다.',
+            note: '"데이터 유형"을 "거의 정렬됨"으로 바꿔 보면 단계 수가 얼마나 줄어드는지 확인할 수 있습니다.',
+            code: [
+                'for i = 1 to n-1',
+                '  key = a[i]',
+                '  j = i - 1',
+                '  while j >= 0 and a[j] > key',
+                '    a[j+1] = a[j]; j = j - 1',
+                '  a[j+1] = key'
+            ],
+            run(c) {
+                const { a, n } = c;
+                for (let i = 1; i < n; i++) {
+                    const key = a[i];
+                    let j = i - 1;
+                    c.range = [0, i];
+                    c.note(1, `a[${i}]=${key}을(를) 키로 꺼냅니다. 앞부분(0~${i - 1})은 이미 정렬되어 있습니다.`, { act: [i] }, T([i, 'key']));
+                    while (j >= 0) {
+                        const x = a[j];
+                        c.count([j], 3, `a[${j}]=${x} 와 키 ${key} 비교`, T([j, 'j'], [j + 1, 'key']));
+                        if (x > key) {
+                            c.write(j + 1, x, 4, `${x} > ${key} 이므로 ${x}을(를) 한 칸 뒤로 밉니다.`, T([j, 'j'], [j + 1, 'key']));
+                            j--;
+                        } else break;
+                    }
+                    if (j + 1 !== i) {
+                        c.write(j + 1, key, 5, `비워진 ${j + 1}번 자리에 키 ${key}을(를) 삽입합니다.`, T([j + 1, 'key']));
+                    } else {
+                        c.note(5, `${key}은(는) 이미 알맞은 위치에 있습니다.`, {}, T([i, 'key']));
+                    }
+                }
+            }
+        },
+
+        /* ---------------- 셸 정렬 ---------------- */
+        {
+            id: 'shell', name: '셸 정렬', en: 'Shell Sort',
+            best: 'O(n log n)', avg: '간격 수열에 따라 다름', worst: 'O(n²)', space: 'O(1)', stable: false, inPlace: true,
+            summary: '삽입 정렬의 개선판입니다. 멀리 떨어진 원소끼리 먼저 정렬해 큰 이동을 줄이고, 간격(gap)을 점점 줄여 마지막에는 gap=1(일반 삽입 정렬)로 마무리합니다.',
+            how: [
+                '간격 gap을 n/2로 시작합니다.',
+                'gap칸 떨어진 원소끼리 삽입 정렬을 수행합니다.',
+                'gap을 절반으로 줄이며 반복합니다.',
+                'gap=1일 때는 일반 삽입 정렬이지만, 이미 대부분 정렬되어 있어 빠르게 끝납니다.'
+            ],
+            pros: ['삽입 정렬보다 훨씬 빠른 경우가 많습니다.', '추가 메모리가 필요 없고 구현이 짧습니다.'],
+            cons: ['안정 정렬이 아닙니다.', '성능이 간격 수열 선택에 좌우됩니다. 이 페이지의 n/2 반감 수열은 최악 O(n²)입니다.'],
+            use: '재귀나 별도 메모리 없이 삽입 정렬보다 나은 성능이 필요한 임베디드 환경 같은 곳에서 고려할 수 있습니다.',
+            note: '더 좋은 간격 수열(예: 연구된 여러 수열)을 쓰면 최악 복잡도를 개선할 수 있다고 알려져 있습니다. 정확한 값은 문헌으로 확인해 보세요.',
+            code: [
+                'gap = n / 2',
+                'while gap > 0',
+                '  for i = gap to n-1',
+                '    tmp = a[i]; j = i',
+                '    while j >= gap and a[j-gap] > tmp',
+                '      a[j] = a[j-gap]; j = j - gap',
+                '    a[j] = tmp',
+                '  gap = gap / 2'
+            ],
+            run(c) {
+                const { a, n } = c;
+                let gap = Math.floor(n / 2);
+                while (gap > 0) {
+                    c.note(1, `간격 gap = ${gap}: ${gap}칸 떨어진 원소들끼리 삽입 정렬을 합니다.`);
+                    for (let i = gap; i < n; i++) {
+                        const tmp = a[i];
+                        let j = i;
+                        c.note(3, `a[${i}]=${tmp}을(를) 꺼내 ${gap}칸 간격의 앞 원소들과 비교합니다.`, { act: [i] }, T([i, 'tmp']));
+                        while (j >= gap) {
+                            const x = a[j - gap];
+                            c.count([j - gap], 4, `a[${j - gap}]=${x} 와 tmp ${tmp} 비교`, T([j - gap, 'j-gap'], [j, 'tmp']));
+                            if (x > tmp) {
+                                c.write(j, x, 5, `${x} > ${tmp} 이므로 ${x}을(를) ${gap}칸 뒤로 밉니다.`, T([j - gap, 'j-gap'], [j, 'tmp']));
+                                j -= gap;
+                            } else break;
+                        }
+                        if (j !== i) c.write(j, tmp, 6, `${j}번 자리에 ${tmp}을(를) 넣습니다.`, T([j, 'tmp']));
+                        else c.note(6, `${tmp}은(는) 이미 알맞은 위치입니다.`, {}, T([i, 'tmp']));
+                    }
+                    gap = Math.floor(gap / 2);
+                    if (gap === 0) c.note(7, '간격이 0이 되어 종료합니다.');
+                }
+            }
+        },
+
+        /* ---------------- 병합 정렬 ---------------- */
+        {
+            id: 'merge', name: '병합 정렬', en: 'Merge Sort',
+            best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(n)', stable: true, inPlace: false,
+            usesAux: true,
+            summary: '분할 정복의 대표 예입니다. 배열을 반으로 나눠 각각 정렬한 뒤, 정렬된 두 구간을 앞에서부터 비교하며 하나로 합칩니다.',
+            how: [
+                '구간을 가운데에서 둘로 나눕니다(원소가 하나가 될 때까지 재귀).',
+                '왼쪽 구간과 오른쪽 구간을 각각 정렬합니다.',
+                '두 구간을 보조 배열에 복사합니다.',
+                '두 구간의 맨 앞 원소를 비교해 더 작은 쪽을 원래 배열에 차례로 씁니다. 한쪽이 비면 나머지를 그대로 옮깁니다.'
+            ],
+            pros: ['입력 상태와 상관없이 항상 O(n log n)이 보장됩니다.', '안정 정렬입니다.', '연결 리스트나 외부(디스크) 정렬에 적합합니다.'],
+            cons: ['O(n)의 추가 메모리가 필요합니다.', '작은 입력에서는 복사 비용 때문에 단순 정렬보다 느릴 수 있습니다.'],
+            use: '안정성과 최악 성능 보장이 필요할 때 선택됩니다. 병합과 삽입 정렬을 결합한 팀소트(Timsort) 같은 실용 정렬의 기반이 되는 아이디어입니다.',
+            note: '아래쪽 "보조 배열" 영역에서 병합 중인 두 구간의 복사본이 한 칸씩 사라지며 원래 배열로 옮겨지는 모습을 볼 수 있습니다.',
+            code: [
+                'mergeSort(lo, hi)',
+                '  if lo >= hi: return',
+                '  mid = (lo + hi) / 2',
+                '  mergeSort(lo, mid); mergeSort(mid+1, hi)',
+                '  merge(lo, mid, hi)',
+                'merge: L = a[lo..mid], R = a[mid+1..hi]',
+                '  while L, R 모두 남음: L[i]와 R[j] 비교',
+                '    작은 값을 a[k]에 쓰고 k++',
+                '  남은 원소를 a[k..]에 복사'
+            ],
+            run(c) {
+                const { a, n } = c;
+                const merge = (lo, mid, hi) => {
+                    const L = a.slice(lo, mid + 1), R = a.slice(mid + 1, hi + 1);
+                    c.aux.fill(null);
+                    L.forEach((v, x) => { c.aux[lo + x] = v; });
+                    R.forEach((v, x) => { c.aux[mid + 1 + x] = v; });
+                    c.range = [lo, hi];
+                    c.note(5, `[${lo}..${mid}]와 [${mid + 1}..${hi}]를 보조 배열에 복사한 뒤 합칩니다.`, {}, T([lo, 'lo'], [mid + 1, 'mid+1'], [hi, 'hi']));
+                    let i = 0, j = 0, k = lo;
+                    while (i < L.length && j < R.length) {
+                        c.count([], 6, `왼쪽 맨 앞 ${L[i]} 와 오른쪽 맨 앞 ${R[j]} 비교`, T([k, 'k']), [lo + i, mid + 1 + j]);
+                        if (L[i] <= R[j]) {
+                            c.aux[lo + i] = null;
+                            c.write(k, L[i], 7, `${L[i]} ≤ ${R[j]} → 왼쪽 값 ${L[i]}을(를) ${k}번 자리에 씁니다.`, T([k, 'k']));
+                            i++;
+                        } else {
+                            c.aux[mid + 1 + j] = null;
+                            c.write(k, R[j], 7, `${L[i]} > ${R[j]} → 오른쪽 값 ${R[j]}을(를) ${k}번 자리에 씁니다.`, T([k, 'k']));
+                            j++;
+                        }
+                        k++;
+                    }
+                    while (i < L.length) {
+                        c.aux[lo + i] = null;
+                        c.write(k, L[i], 8, `오른쪽이 비었으므로 남은 왼쪽 값 ${L[i]}을(를) 그대로 옮깁니다.`, T([k, 'k']));
+                        i++; k++;
+                    }
+                    while (j < R.length) {
+                        c.aux[mid + 1 + j] = null;
+                        c.write(k, R[j], 8, `왼쪽이 비었으므로 남은 오른쪽 값 ${R[j]}을(를) 그대로 옮깁니다.`, T([k, 'k']));
+                        j++; k++;
+                    }
+                };
+                const sort = (lo, hi) => {
+                    if (lo >= hi) return;
+                    const mid = (lo + hi) >> 1;
+                    c.range = [lo, hi];
+                    c.note(2, `구간 [${lo}..${hi}]을(를) 가운데(${mid})에서 둘로 나눕니다.`, {}, T([lo, 'lo'], [mid, 'mid'], [hi, 'hi']));
+                    sort(lo, mid);
+                    sort(mid + 1, hi);
+                    merge(lo, mid, hi);
+                };
+                sort(0, n - 1);
+            }
+        },
+
+        /* ---------------- 퀵 정렬 ---------------- */
+        {
+            id: 'quick', name: '퀵 정렬', en: 'Quick Sort',
+            best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n²)', space: 'O(log n)', stable: false, inPlace: true,
+            usesPivot: true,
+            summary: '피벗(기준 원소)을 하나 고른 뒤, 피벗보다 작은 값은 왼쪽 큰 값은 오른쪽으로 나누고(분할) 양쪽을 재귀적으로 정렬합니다.',
+            how: [
+                '구간의 마지막 원소를 피벗으로 선택합니다.',
+                '구간을 훑으며 피벗보다 작은 값을 앞쪽(i 이전)으로 모읍니다.',
+                '피벗을 "작은 값 영역" 바로 뒤로 옮기면 피벗의 최종 위치가 확정됩니다.',
+                '피벗 왼쪽과 오른쪽 구간에 같은 과정을 재귀적으로 적용합니다.'
+            ],
+            pros: ['평균 O(n log n)이며, 상수 비용이 작고 메모리 접근이 순차적이라 실제로 빠른 편입니다.', '별도의 배열이 필요 없습니다(재귀 스택 제외).'],
+            cons: ['최악 O(n²). 이 구현은 마지막 원소를 피벗으로 쓰므로 이미 정렬되었거나 역순인 입력에서 최악이 됩니다.', '안정 정렬이 아닙니다.'],
+            use: '범용 정렬로 널리 쓰이는 계열입니다. 피벗을 무작위로 고르거나 세 값의 중앙값(median-of-three)으로 고르면 최악 상황을 피하기 쉽습니다.',
+            note: '"이미 정렬됨" 또는 "역순"을 선택해 단계 수가 크게 늘어나는 것을 확인해 보세요.',
+            code: [
+                'quickSort(lo, hi)',
+                '  if lo >= hi: return',
+                '  pivot = a[hi]; i = lo',
+                '  for j = lo to hi-1',
+                '    if a[j] < pivot: swap(a[i], a[j]); i++',
+                '  swap(a[i], a[hi])   // 피벗 위치 확정',
+                '  quickSort(lo, i-1); quickSort(i+1, hi)'
+            ],
+            run(c) {
+                const { a } = c;
+                const sort = (lo, hi) => {
+                    if (lo > hi) return;
+                    if (lo === hi) {
+                        c.range = [lo, hi];
+                        c.mark(lo);
+                        c.note(1, `구간에 원소가 하나뿐이므로 ${a[lo]}은(는) 제자리에 확정됩니다.`, {}, T([lo, '✓']));
+                        return;
+                    }
+                    c.range = [lo, hi];
+                    c.pivot = hi;
+                    const p = a[hi];
+                    let i = lo;
+                    c.note(2, `구간 [${lo}..${hi}]: 마지막 원소 ${p}을(를) 피벗(P)으로 선택합니다.`, {}, T([i, 'i'], [hi, 'P']));
+                    for (let j = lo; j < hi; j++) {
+                        const x = a[j];
+                        if (c.compare(j, hi, 3, `a[${j}]=${x} 와 피벗 ${p} 비교`, T([i, 'i'], [j, 'j'], [hi, 'P'])) < 0) {
+                            if (i !== j) c.swap(i, j, 4, `${x} < ${p}: 작은 값 영역의 끝(i=${i})과 교환합니다.`, T([i, 'i'], [j, 'j'], [hi, 'P']));
+                            else c.note(4, `${x} < ${p}: 이미 작은 값 영역에 붙어 있습니다.`, { act: [j] }, T([i, 'i/j'], [hi, 'P']));
+                            i++;
+                        }
+                    }
+                    if (i !== hi) c.swap(i, hi, 5, `피벗 ${p}을(를) ${i}번 자리로 옮깁니다.`, T([i, 'i'], [hi, 'P']));
+                    c.mark(i);
+                    c.pivot = -1;
+                    c.note(6, `피벗 ${p}의 위치(${i}) 확정! 왼쪽 [${lo}..${i - 1}]과 오른쪽 [${i + 1}..${hi}]를 각각 재귀 정렬합니다.`, {}, T([i, 'P']));
+                    sort(lo, i - 1);
+                    sort(i + 1, hi);
+                };
+                sort(0, c.n - 1);
+            }
+        },
+
+        /* ---------------- 힙 정렬 ---------------- */
+        {
+            id: 'heap', name: '힙 정렬', en: 'Heap Sort',
+            best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(1)', stable: false, inPlace: true,
+            summary: '배열을 최대 힙(부모 ≥ 자식)으로 만든 뒤, 루트(최댓값)를 맨 뒤로 보내고 힙 크기를 줄여 가며 반복합니다.',
+            how: [
+                '배열을 완전 이진 트리로 봅니다. i번 원소의 자식은 2i+1, 2i+2번입니다.',
+                '마지막 부모 노드부터 거꾸로 올라가며 sift-down(아래로 내리기)해 최대 힙을 만듭니다.',
+                '루트(최댓값)와 힙의 마지막 원소를 교환하고, 마지막 자리는 확정합니다.',
+                '새 루트를 sift-down해 힙을 복구하고, 힙이 비워질 때까지 반복합니다.'
+            ],
+            pros: ['항상 O(n log n)이 보장됩니다.', '추가 메모리가 필요 없는 제자리 정렬입니다.'],
+            cons: ['안정 정렬이 아닙니다.', '메모리를 건너뛰며 접근하므로, 일반적으로 퀵 정렬보다 느린 경우가 많습니다.'],
+            use: '최악 성능 보장과 O(1) 추가 메모리가 모두 필요할 때 고려합니다. 힙 자료구조는 우선순위 큐의 기반이기도 합니다.',
+            note: '흐리게 표시된 오른쪽 구간은 이미 힙에서 빠져나와 확정된 영역(초록)입니다.',
+            code: [
+                '// 1단계: 최대 힙 만들기',
+                'for i = n/2-1 down to 0: siftDown(i, n)',
+                '// 2단계: 최댓값을 뒤로 보내기',
+                'for end = n-1 down to 1',
+                '  swap(a[0], a[end])',
+                '  siftDown(0, end)',
+                'siftDown(i, size):',
+                '  큰 쪽 자식 c = 2i+1 또는 2i+2 선택',
+                '  if a[c] > a[i]: swap(a[i], a[c]); i = c'
+            ],
+            run(c) {
+                const { a, n } = c;
+                const sift = (i, size) => {
+                    while (true) {
+                        const l = 2 * i + 1, r = l + 1;
+                        if (l >= size) return;
+                        let big = l;
+                        if (r < size) {
+                            const x = a[l], y = a[r];
+                            if (c.compare(r, l, 7, `두 자식 a[${l}]=${x}, a[${r}]=${y} 중 큰 쪽을 찾습니다.`, T([i, 'i'], [l, 'L'], [r, 'R'])) > 0) big = r;
+                        }
+                        const pv = a[i], cv = a[big];
+                        if (c.compare(big, i, 8, `큰 자식 ${cv} 와 부모 ${pv} 비교`, T([i, 'i'], [big, 'C'])) > 0) {
+                            c.swap(i, big, 8, `자식 ${cv} > 부모 ${pv} 이므로 교환하고 아래로 내려갑니다.`, T([i, 'i'], [big, 'C']));
+                            i = big;
+                        } else return;
+                    }
+                };
+                c.range = [0, n - 1];
+                c.note(0, '1단계: 배열을 최대 힙으로 만듭니다. 마지막 부모 노드부터 거꾸로 올라갑니다.');
+                for (let s = (n >> 1) - 1; s >= 0; s--) {
+                    c.note(1, `${s}번 노드를 sift-down해 부분 트리를 최대 힙으로 만듭니다.`, {}, T([s, 'i']));
+                    sift(s, n);
+                }
+                c.note(2, `최대 힙 완성! a[0]=${a[0]}이(가) 최댓값입니다. 2단계: 최댓값을 뒤로 보냅니다.`);
+                for (let end = n - 1; end >= 1; end--) {
+                    c.range = [0, end];
+                    c.swap(0, end, 4, `루트(최댓값 ${a[0]})를 힙의 마지막 자리(${end})와 교환합니다.`, T([0, 'root'], [end, 'end']));
+                    c.mark(end);
+                    c.range = [0, end - 1];
+                    sift(0, end);
+                }
+                c.mark(0);
+            }
+        }
+    ];
+
+    /* =====================================================================
+     * 4. 상태
+     * ===================================================================== */
+    const state = {
+        algo: ALGOS[0],
+        data: [],
+        pattern: 'random',
+        steps: [],
+        pos: 0,
+        playing: false,
+        rate: 48
+    };
+
+    /* =====================================================================
+     * 5. 데이터 생성 / 입력
+     * ===================================================================== */
+    function generate(pattern, n) {
+        const base = (i) => Math.round(5 + (i / Math.max(1, n - 1)) * 95);
+        let arr;
+        switch (pattern) {
+            case 'sorted': arr = Array.from({ length: n }, (_, i) => base(i)); break;
+            case 'reverse': arr = Array.from({ length: n }, (_, i) => base(n - 1 - i)); break;
+            case 'nearly':
+                arr = Array.from({ length: n }, (_, i) => base(i));
+                for (let k = Math.max(1, Math.floor(n / 10)); k > 0; k--) {
+                    const i = rnd(0, n - 1), j = rnd(0, n - 1);
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                break;
+            case 'few': arr = Array.from({ length: n }, () => [20, 40, 60, 80, 100][rnd(0, 4)]); break;
+            default: arr = Array.from({ length: n }, () => rnd(5, 100));
+        }
+        return arr;
+    }
+
+    const PATTERN_NAME = { random: '무작위', nearly: '거의 정렬됨', reverse: '역순', sorted: '이미 정렬됨', few: '중복 많음', custom: '직접 입력' };
+
+    function parseCustom(text) {
+        const parts = text.trim().split(/[\s,]+/).filter(Boolean);
+        if (parts.length < 2 || parts.length > 60) return { error: `숫자는 2~60개여야 합니다. (현재 ${parts.length}개)` };
+        const nums = parts.map(Number);
+        if (nums.some((v) => !Number.isInteger(v) || v < 1 || v > 999)) return { error: '1~999 사이의 정수만 입력할 수 있습니다.' };
+        return { nums };
+    }
+
+    /* =====================================================================
+     * 6. 렌더링
+     * ===================================================================== */
+    const el = {
+        tabs: $('tabs'), bars: $('bars'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
+        msg: $('msg'), play: $('playBtn'), scrub: $('scrub'), speed: $('speed'), speedVal: $('speedVal'),
+        size: $('size'), sizeVal: $('sizeVal'), pattern: $('pattern'), custom: $('custom'), err: $('err'),
+        sCmp: $('sCmp'), sSwp: $('sSwp'), sStep: $('sStep'), sState: $('sState'), legPivot: $('legPivot'),
+        infoMain: $('infoMain'), infoSide: $('infoSide'), cmpBody: $('cmpBody'), meters: $('meters'), measureNote: $('measureNote')
+    };
+    let barEls = [], tagEls = [], auxEls = [], maxV = 1, showVal = true;
+
+    function buildStage() {
+        const n = state.data.length;
+        maxV = Math.max(...state.data);
+        const w = el.bars.clientWidth || 600;
+        const gap = n > 40 ? 2 : n > 24 ? 3 : 5;
+        const per = (w - gap * (n - 1)) / n;
+        showVal = per >= 24;
+        const showTags = per >= 18;
+        [el.bars, el.tags, el.auxBars].forEach((e) => e.style.setProperty('--gap', gap + 'px'));
+        el.bars.innerHTML = ''; el.tags.innerHTML = ''; el.auxBars.innerHTML = '';
+        barEls = []; tagEls = []; auxEls = [];
+        for (let i = 0; i < n; i++) {
+            const b = document.createElement('div');
+            b.className = 'bar';
+            const v = document.createElement('span');
+            v.className = 'v';
+            b.appendChild(v);
+            el.bars.appendChild(b);
+            barEls.push(b);
+            const t = document.createElement('div');
+            t.className = 't';
+            el.tags.appendChild(t);
+            tagEls.push(t);
+            const x = document.createElement('div');
+            x.className = 'bar';
+            el.auxBars.appendChild(x);
+            auxEls.push(x);
+        }
+        el.tags.style.display = showTags ? 'flex' : 'none';
+        el.aux.hidden = !state.algo.usesAux;
+        el.legPivot.style.display = state.algo.usesPivot ? '' : 'none';
+    }
+
+    function render() {
+        const s = state.steps[state.pos];
+        const n = s.arr.length;
+        const cls = new Array(n).fill('');
+        for (let i = 0; i < n; i++) {
+            if (s.sorted[i]) cls[i] = 'sorted';
+            else if (s.range && (i < s.range[0] || i > s.range[1])) cls[i] = 'dim';
+        }
+        // 우선순위: 교환·쓰기 > 피벗 > 비교
+        s.hl.cmp.forEach((i) => { if (!s.sorted[i]) cls[i] = 'cmp'; });
+        if (s.pivot >= 0) cls[s.pivot] = 'pivot';
+        s.hl.act.forEach((i) => { cls[i] = 'act'; });
+
+        for (let i = 0; i < n; i++) {
+            const b = barEls[i];
+            b.style.height = Math.max(2, (s.arr[i] / maxV) * 100) + '%';
+            b.className = 'bar ' + cls[i];
+            if (showVal) b.firstChild.textContent = s.arr[i];
+            tagEls[i].textContent = s.tags[i] || '';
+        }
+        if (s.aux) {
+            for (let i = 0; i < n; i++) {
+                const v = s.aux[i];
+                auxEls[i].style.height = v == null ? '0%' : Math.max(3, (v / maxV) * 100) + '%';
+                auxEls[i].className = 'bar' + (s.hl.axc.includes(i) ? ' cmp' : '');
+            }
+        }
+        el.msg.textContent = s.msg;
+        el.sCmp.textContent = s.cmp;
+        el.sSwp.textContent = s.swp;
+        const last = state.steps.length - 1;
+        el.sStep.textContent = `${state.pos} / ${last}`;
+        el.sState.textContent = state.pos === last ? '완료' : state.playing ? '진행 중' : state.pos === 0 ? '대기' : '일시정지';
+        el.scrub.value = state.pos;
+
+        el.infoSide.querySelectorAll('.code li').forEach((li, i) => li.classList.toggle('on', i === s.line));
+
+        $('firstBtn').disabled = $('prevBtn').disabled = state.pos === 0;
+        $('lastBtn').disabled = $('nextBtn').disabled = state.pos === last;
+        el.play.textContent = state.playing ? '⏸ 일시정지' : state.pos === last ? '↻ 다시 재생' : '▶ 재생';
+    }
+
+    function renderTabs() {
+        el.tabs.innerHTML = ALGOS.map((a) => `
+            <button type="button" class="tab" data-id="${a.id}" aria-pressed="${a === state.algo}">
+                <span class="n">${a.name}</span><span class="e">${a.en}</span>
+                <span class="c ${cxClass(a.avg)}">평균 ${esc(a.avg)}</span>
+            </button>`).join('');
+    }
+
+    function cxClass(s) {
+        if (s === 'O(n²)') return 'bad';
+        if (s.startsWith('O(n log')) return 'good';
+        if (s === 'O(n)' || s === 'O(1)' || s === 'O(log n)') return 'good';
+        return 'ok';
+    }
+
+    function renderInfo() {
+        const a = state.algo;
+        el.infoMain.innerHTML = `
+            <div class="info-head"><h2>${a.name}</h2><span class="en">${a.en}</span></div>
+            <p class="lead">${esc(a.summary)}</p>
+            <h3>동작 방식</h3>
+            <ol class="how">${a.how.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>
+            <h3>장점</h3><ul class="pc pros">${a.pros.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+            <h3>단점</h3><ul class="pc cons">${a.cons.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+            <div class="use"><b>활용:</b> ${esc(a.use)}</div>`;
+        el.infoSide.innerHTML = `
+            <h3>시간·공간 복잡도</h3>
+            <div class="cx">
+                <div><div class="l">최선</div><div class="x ${cxClass(a.best)}">${esc(a.best)}</div></div>
+                <div><div class="l">평균</div><div class="x ${cxClass(a.avg)}">${esc(a.avg)}</div></div>
+                <div><div class="l">최악</div><div class="x ${cxClass(a.worst)}">${esc(a.worst)}</div></div>
+                <div><div class="l">추가 공간</div><div class="x ${cxClass(a.space)}">${esc(a.space)}</div></div>
+            </div>
+            <div class="chips">
+                <span class="chip">${a.stable ? '안정 정렬' : '불안정 정렬'}</span>
+                <span class="chip">${a.inPlace ? '제자리 정렬' : '별도 배열 사용'}</span>
+            </div>
+            <p class="cx-note">${esc(a.note)}</p>
+            <h3>의사 코드 <span class="small">(현재 단계가 강조됩니다)</span></h3>
+            <ol class="code">${a.code.map((l) => `<li>${esc(l)}</li>`).join('')}</ol>`;
+    }
+
+    function renderCompareTable() {
+        el.cmpBody.innerHTML = ALGOS.map((a) => `
+            <tr class="${a === state.algo ? 'cur' : ''}">
+                <td class="name"><button type="button" data-id="${a.id}">${a.name}</button></td>
+                <td class="${cxClass(a.best)}">${esc(a.best)}</td>
+                <td class="${cxClass(a.avg)}">${esc(a.avg)}</td>
+                <td class="${cxClass(a.worst)}">${esc(a.worst)}</td>
+                <td>${esc(a.space)}</td>
+                <td>${a.stable ? '✓' : '—'}</td>
+                <td>${a.inPlace ? '✓' : '—'}</td>
+            </tr>`).join('');
+    }
+
+    function renderMeasure() {
+        const results = ALGOS.map((a) => {
+            const last = record(a, state.data).pop();
+            return { a, cmp: last.cmp, swp: last.swp };
+        });
+        const maxC = Math.max(1, ...results.map((r) => r.cmp));
+        const maxS = Math.max(1, ...results.map((r) => r.swp));
+        el.measureNote.textContent = `현재 데이터: ${state.data.length}개 · ${PATTERN_NAME[state.pattern]} (데이터를 바꾸면 갱신됩니다)`;
+        el.meters.innerHTML = results.map((r) => `
+            <div class="meter">
+                <div class="nm">${r.a.name}</div>
+                <div class="tr">
+                    <div class="ln"><div class="fill a" style="width:${(r.cmp / maxC) * 70}%"></div><span class="num">비교 ${r.cmp.toLocaleString()}</span></div>
+                    <div class="ln"><div class="fill b" style="width:${(r.swp / maxS) * 70}%"></div><span class="num">교환·쓰기 ${r.swp.toLocaleString()}</span></div>
+                </div>
+            </div>`).join('');
+    }
+
+    /* =====================================================================
+     * 7. 제어: 로드 / 재생
+     * ===================================================================== */
+    function load() {
+        pause();
+        state.steps = record(state.algo, state.data);
+        state.pos = 0;
+        el.scrub.max = state.steps.length - 1;
+        buildStage();
+        renderInfo();
+        render();
+    }
+
+    function setData(arr, pattern) {
+        state.data = arr;
+        state.pattern = pattern;
+        el.err.textContent = '';
+        load();
+        renderMeasure();
+    }
+
+    function selectAlgo(id, updateHash = true) {
+        const a = ALGOS.find((x) => x.id === id);
+        if (!a) return;
+        state.algo = a;
+        if (updateHash) history.replaceState(null, '', '#' + id);
+        renderTabs();
+        renderCompareTable();
+        load();
+    }
+
+    function go(p) {
+        state.pos = clamp(p, 0, state.steps.length - 1);
+        render();
+    }
+
+    let raf = 0, lastT = 0, acc = 0;
+    function tick(t) {
+        if (!state.playing) return;
+        const dt = Math.min(100, t - lastT);
+        lastT = t;
+        acc += (dt / 1000) * state.rate;
+        const adv = Math.floor(acc);
+        if (adv > 0) { acc -= adv; state.pos = Math.min(state.steps.length - 1, state.pos + adv); }
+        if (state.pos >= state.steps.length - 1) { state.playing = false; render(); return; }
+        render();
+        raf = requestAnimationFrame(tick);
+    }
+    function play() {
+        if (state.pos >= state.steps.length - 1) state.pos = 0;
+        state.playing = true;
+        acc = 0; lastT = performance.now();
+        render();
+        raf = requestAnimationFrame(tick);
+    }
+    function pause() {
+        state.playing = false;
+        cancelAnimationFrame(raf);
+        if (state.steps.length) render();
+    }
+
+    function applySpeed() {
+        const v = Number(el.speed.value);
+        state.rate = 2 * Math.pow(2, v / 12);
+        el.speedVal.textContent = `${Math.round(state.rate)}단계/초`;
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        document.documentElement.style.setProperty('--dur', reduce ? '0ms' : Math.min(180, Math.round(700 / state.rate)) + 'ms');
+    }
+
+    /* =====================================================================
+     * 8. 이벤트
+     * ===================================================================== */
+    el.tabs.addEventListener('click', (e) => { const b = e.target.closest('.tab'); if (b) selectAlgo(b.dataset.id); });
+    el.cmpBody.addEventListener('click', (e) => {
+        const b = e.target.closest('button[data-id]');
+        if (b) { selectAlgo(b.dataset.id); $('vis-h').scrollIntoView({ block: 'start' }); }
+    });
+
+    el.play.addEventListener('click', () => (state.playing ? pause() : play()));
+    $('nextBtn').addEventListener('click', () => { pause(); go(state.pos + 1); });
+    $('prevBtn').addEventListener('click', () => { pause(); go(state.pos - 1); });
+    $('firstBtn').addEventListener('click', () => { pause(); go(0); });
+    $('lastBtn').addEventListener('click', () => { pause(); go(state.steps.length - 1); });
+    el.scrub.addEventListener('input', () => { pause(); go(Number(el.scrub.value)); });
+    el.speed.addEventListener('input', applySpeed);
+
+    const regenerate = () => setData(generate(el.pattern.value, Number(el.size.value)), el.pattern.value);
+    el.pattern.addEventListener('change', regenerate);
+    el.size.addEventListener('input', () => { el.sizeVal.textContent = el.size.value; });
+    el.size.addEventListener('change', regenerate);
+    $('shuffleBtn').addEventListener('click', regenerate);
+
+    const applyCustom = () => {
+        const r = parseCustom(el.custom.value);
+        if (r.error) { el.err.textContent = r.error; return; }
+        el.size.value = r.nums.length;
+        el.sizeVal.textContent = r.nums.length;
+        setData(r.nums, 'custom');
+    };
+    $('applyBtn').addEventListener('click', applyCustom);
+    el.custom.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyCustom(); });
+
+    document.addEventListener('keydown', (e) => {
+        const tag = (e.target.tagName || '').toLowerCase();
+        if (['input', 'select', 'textarea', 'button'].includes(tag) && e.target.type !== 'range') return;
+        if (e.key === ' ') { e.preventDefault(); el.play.click(); }
+        else if (e.key === 'ArrowRight') { pause(); go(state.pos + 1); }
+        else if (e.key === 'ArrowLeft') { pause(); go(state.pos - 1); }
+    });
+
+    let rz;
+    window.addEventListener('resize', () => {
+        clearTimeout(rz);
+        rz = setTimeout(() => { if (state.steps.length) { buildStage(); render(); } }, 150);
+    });
+    window.addEventListener('hashchange', () => selectAlgo(location.hash.slice(1), false));
+
+    /* =====================================================================
+     * 9. 시작
+     * ===================================================================== */
+    // 테스트/디버깅용으로 기록기만 노출한다.
+    window.__sorting = { ALGOS, record };
+
+    applySpeed();
+    const initial = ALGOS.find((a) => a.id === location.hash.slice(1));
+    if (initial) state.algo = initial;
+    renderTabs();
+    renderCompareTable();
+    setData(generate('random', 20), 'random');
+})();
+</script>
 </body>
 </html>

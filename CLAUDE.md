@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A standalone, single-file merge sort visualizer (`index.html`). No build tools, dependencies, or package manager — open directly in a browser.
+A standalone, single-file sorting-algorithm explainer and visualizer (`index.html`, Korean UI). Covers bubble, selection, insertion, shell, merge, quick and heap sort. No build tools, dependencies, or package manager — open directly in a browser. `index.html#quick` (etc.) deep-links to an algorithm.
 
 ## Running
 
@@ -15,19 +15,14 @@ open index.html        # macOS
 
 ## Architecture
 
-Everything lives in `index.html` as a single-page app:
+Everything lives in `index.html` (CSS in `<style>`, markup, then one IIFE script):
 
-- **CSS** (lines 7–289): Styling for input grid, animated bars (`.array-bar`, states: `.sorted`, `.comparing`, `.merging`), stats, and speed control.
-- **HTML** (lines 291–332): Layout with `#inputGrid`, `#arrayContainer`, stat boxes, and speed slider.
-- **JavaScript** (lines 334–562): All logic inline.
-  - `initializeInputs()` — builds 10 number inputs with random defaults.
-  - `displayArray(arr, highlighting)` — re-renders bars with optional highlight states.
-  - `mergeSort(arr, start, end, sorted)` — async recursive divide step with `await sleep()` for animation.
-  - `merge(arr, start, mid, end, sorted)` — async merge step; increments `comparisons` and `swaps` counters.
-  - Animation speed is controlled by `speedSlider` (1–100); `getSpeed()` inverts it so higher = faster.
+- **Record, then replay.** `record(algo, data)` runs an algorithm to completion and stores a snapshot per step (`arr`, `sorted`, highlight sets `hl.{cmp,act,axc}`, `line`, `msg`, `tags`, `range`, `pivot`, `aux`, running `cmp`/`swp` counters). The player only moves `state.pos` through `state.steps`, so play/pause/step-back/scrubber are trivial.
+- **`ALGOS`** — one entry per algorithm: `run(c)` (uses the recorder context `c`: `c.compare`, `c.count`, `c.swap`, `c.write`, `c.note`, `c.mark`, `c.range`, `c.pivot`, `c.aux`), complexity fields, descriptive text (`summary`, `how`, `pros`, `cons`, `use`, `note`) and pseudocode `code[]`. The `line` passed to each recorder call is the index into `code[]` that gets highlighted. Flags `usesAux` / `usesPivot` toggle the aux-array row and pivot legend.
+- **Rendering:** `buildStage()` creates bar/tag/aux DOM once per data or algorithm change; `render()` only updates heights and classes for the current step (so CSS transitions animate). `renderMeasure()` records all algorithms on the current data for the comparison chart.
+- Theme is CSS variables on `:root` with a `prefers-color-scheme: dark` override.
+- `window.__sorting` exposes `{ALGOS, record}` for testing: every algorithm's final snapshot should equal the sorted input.
 
-## Key Patterns
+## Adding an algorithm
 
-- The `sorted` array tracks which indices are fully sorted and is passed through recursion to maintain persistent green highlighting.
-- `isAnimating` flag prevents re-entry during animation; both buttons are disabled while sorting runs.
-- Bar heights are proportional: `(value / maxValue) * 100%`.
+Add an entry to `ALGOS` with `run(c)` that only mutates the array through the `c.*` helpers (so every change is recorded). Tabs, info panel, comparison table and measurements are generated from the entry automatically.
