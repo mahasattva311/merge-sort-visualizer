@@ -166,6 +166,84 @@
         .aux .bar.cmp { background: var(--cmp); }
         .aux .bar .v { display: none; }
 
+
+        /* ---------- Visualization mode switch / characters ---------- */
+        .vis-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; }
+        .vis-switch .lbl { font-size: .8rem; font-weight: 700; color: var(--muted); margin-right: 2px; }
+        button.btn.seg[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+        .people {
+            position: relative; height: 390px; padding-top: 70px; box-sizing: border-box; border-bottom: 2px solid var(--border); overflow-x: clip;
+            --mdur: 300ms;
+        }
+        .p {
+            position: absolute; bottom: 0; left: 0;
+            transition: transform var(--mdur) cubic-bezier(.4, 0, .2, 1), opacity var(--mdur) ease;
+            will-change: transform;
+        }
+        .p.dim { opacity: .35; }
+        .p.held { z-index: 3; }
+        .p.moving { z-index: 2; }
+        .p .fig { position: relative; height: 100%; width: min(100%, 46px); margin: 0 auto; display: flex; flex-direction: column; align-items: center; transform-origin: 50% 100%; }
+        .p .v {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 2px;
+            font-size: .72rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap;
+        }
+        .p.cmp .v, .p.act .v, .p.pivot .v { color: var(--text); }
+        .p .head {
+            flex: none; width: min(78%, 26px); aspect-ratio: 1; border-radius: 50%; background: var(--skin, #f1c9a5);
+            border: 2px solid transparent; position: relative; box-sizing: border-box;
+        }
+        .p .head::before { /* 머리카락 */
+            content: ""; position: absolute; left: -2px; right: -2px; top: -3px; height: 52%;
+            background: var(--hair, #3a2a20); border-radius: 50% 50% 20% 20% / 90% 90% 30% 30%;
+        }
+        .p .head::after { /* 눈 */
+            content: ""; position: absolute; left: 50%; top: 58%; width: 14%; aspect-ratio: 1; border-radius: 50%;
+            background: #222; transform: translateX(-50%); box-shadow: -140% 0 0 #222, 140% 0 0 #222;
+        }
+        .p .torso {
+            flex: 1.25 1 0; width: 62%; margin-top: 2px; background: var(--shirt, #4f8cff); border-radius: 7px 7px 3px 3px; position: relative;
+        }
+        .p .arm {
+            position: absolute; top: 5%; width: 26%; height: min(82%, 46px); background: var(--shirt, #4f8cff); filter: brightness(.88);
+            border-radius: 99px; transform-origin: 50% 8%;
+        }
+        .p .arm.l { left: -32%; transform: rotate(10deg); }
+        .p .arm.r { right: -32%; transform: rotate(-10deg); }
+        .p .legs { flex: 0 0 36%; width: 62%; display: flex; justify-content: center; gap: 10%; }
+        .p .leg { flex: 0 0 38%; background: var(--pants, #34405c); border-radius: 0 0 4px 4px; transform-origin: 50% 0; }
+        .p::after { /* 발밑 상태 표시 */
+            content: ""; position: absolute; left: 50%; bottom: -7px; width: min(100%, 40px); height: 4px; border-radius: 3px;
+            transform: translateX(-50%); background: transparent; transition: background-color var(--mdur) ease;
+        }
+        .p.cmp::after { background: var(--cmp); } .p.cmp .head { border-color: var(--cmp); }
+        .p.act::after { background: var(--act); } .p.act .head { border-color: var(--act); }
+        .p.pivot::after { background: var(--pivot); } .p.pivot .head { border-color: var(--pivot); }
+        .p.sorted::after { background: var(--done); } .p.sorted .head { border-color: var(--done); }
+        .p.held .fig { filter: drop-shadow(0 6px 5px rgba(0, 0, 0, .25)); }
+
+        /* 춤 동작 3종: 점프 / 한 바퀴 회전 / 좌우 스웨이 */
+        .p.d0 .fig { animation: hop var(--mdur) ease-in-out; }
+        .p.d0 .arm.l { animation: armUpL var(--mdur) ease-in-out; } .p.d0 .arm.r { animation: armUpR var(--mdur) ease-in-out; }
+        .p.d0 .leg.l { animation: kickL var(--mdur) ease-in-out; } .p.d0 .leg.r { animation: kickR var(--mdur) ease-in-out; }
+        .p.d1 .fig { animation: twirl var(--mdur) ease-in-out; }
+        .p.d1 .arm.l { animation: armUpL var(--mdur) ease-in-out; } .p.d1 .arm.r { animation: armUpR var(--mdur) ease-in-out; }
+        .p.d2 .fig { animation: sway var(--mdur) ease-in-out; }
+        .p.d2 .arm.l { animation: armUpR var(--mdur) ease-in-out; } .p.d2 .arm.r { animation: armUpL var(--mdur) ease-in-out; }
+        .p.d2 .leg.l { animation: kickR var(--mdur) ease-in-out; } .p.d2 .leg.r { animation: kickL var(--mdur) ease-in-out; }
+        @keyframes hop { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(0) scaleY(.93); } 50% { transform: translateY(-34px) scaleY(1.04); } 85% { transform: translateY(0) scaleY(.95); } }
+        @keyframes twirl { 0%, 100% { transform: translateY(0) rotateY(0); } 50% { transform: translateY(-22px) rotateY(180deg); } 99% { transform: translateY(0) rotateY(359deg); } }
+        @keyframes sway { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-13deg) translateY(-8px); } 75% { transform: rotate(13deg) translateY(-8px); } }
+        @keyframes armUpL { 0%, 100% { transform: rotate(10deg); } 50% { transform: rotate(150deg); } }
+        @keyframes armUpR { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(-150deg); } }
+        @keyframes kickL { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(28deg); } }
+        @keyframes kickR { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-28deg); } }
+        .people.cheer .p .fig { animation: hop 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 40ms); }
+        .people.cheer .p .arm.l { animation: armUpL 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 40ms); }
+        .people.cheer .p .arm.r { animation: armUpR 900ms ease-in-out infinite; animation-delay: calc(var(--i) * 40ms); }
+        .legend .note-people { display: none; }
+        .chart.mode-people ~ .legend .note-people { display: inline; }
+
         .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .8rem; color: var(--muted); }
         .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
 
@@ -243,12 +321,14 @@
             .info-grid { grid-template-columns: 1fr; }
             .card { padding: 16px; }
             .bars { height: 260px; }
+            .people { height: 350px; }
             .hero { padding-top: 36px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
-            .bar, .tab { transition: none; }
+            .bar, .tab, .p { transition: none; }
+            .p .fig, .p .arm, .p .leg { animation: none !important; }
         }
     </style>
 </head>
@@ -303,8 +383,14 @@
             </div>
             <div class="err" id="err" role="alert"></div>
 
-            <div class="chart">
+            <div class="vis-switch" role="group" aria-label="시각화 방식">
+                <span class="lbl">시각화</span>
+                <button class="btn seg" type="button" id="modeBars" data-mode="bars" aria-pressed="true">📊 막대 그래프</button>
+                <button class="btn seg" type="button" id="modePeople" data-mode="people" aria-pressed="false">🕺 캐릭터</button>
+            </div>
+            <div class="chart" id="chart">
                 <div class="bars" id="bars" aria-hidden="true"></div>
+                <div class="people" id="people" aria-hidden="true" hidden></div>
                 <div class="tags" id="tags" aria-hidden="true"></div>
                 <div class="aux-wrap" id="auxWrap" hidden>
                     <div class="aux-title">보조 배열 (병합 중인 두 구간의 복사본)</div>
@@ -318,6 +404,7 @@
                 <span id="legPivot"><i style="background:var(--pivot)"></i>피벗</span>
                 <span><i style="background:var(--done)"></i>위치 확정</span>
                 <span><i style="background:var(--bar);opacity:.3"></i>현재 작업 범위 밖</span>
+                <span class="note-people">키가 클수록 큰 값 · 위로 들어 올린 사람은 잠시 빼 둔 원소 (임시 변수·병합 중인 값)</span>
             </div>
 
             <div class="msg" id="msg" aria-live="polite"></div>
@@ -417,13 +504,31 @@
         const sorted = new Array(n).fill(false);
         const c = { a, n, cmp: 0, swp: 0, range: null, pivot: -1, aux: algo.usesAux ? new Array(n).fill(null) : null };
 
+        // 캐릭터 시각화용 신원 추적: 사람 p는 자리 px[p]에 서 있고, 임시로 빼 둔 상태면 held[p]=true.
+        // occ[slot]은 그 자리에 서 있는 사람(없으면 -1). 값은 val[p] = 처음 값.
+        const occ = Array.from({ length: n }, (_, i) => i);
+        const px = occ.slice(), held = new Array(n).fill(false), val = data.slice();
+        const place = (p, slot) => { px[p] = slot; held[p] = false; occ[slot] = p; };
+        const whoWrites = (i, v) => {
+            const old = occ[i];
+            if (old >= 0 && val[old] === v) return old;
+            let best = -1;
+            for (let q = 0; q < n; q++) if (held[q] && val[q] === v && (best < 0 || px[q] < px[best])) best = q;
+            if (best >= 0) return best;
+            for (let q = 0; q < n; q++) {
+                if (held[q] || px[q] === i || val[q] !== v || occ[px[q]] !== q) continue;
+                if (best < 0 || Math.abs(px[q] - i) < Math.abs(px[best] - i)) best = q;
+            }
+            return best >= 0 ? best : old;
+        };
+
         // hl: { cmp: 비교 강조, act: 교환/쓰기 강조, axc: 보조 배열 비교 강조 }
         const snap = (hl, line, msg, tags) => steps.push({
             arr: a.slice(), sorted: sorted.slice(),
             hl: { cmp: hl.cmp || [], act: hl.act || [], axc: hl.axc || [] },
             line, msg, tags: tags || {},
             range: c.range && c.range.slice(), pivot: c.pivot, aux: c.aux && c.aux.slice(),
-            cmp: c.cmp, swp: c.swp
+            cmp: c.cmp, swp: c.swp, px: px.slice(), held: held.slice()
         });
 
         c.note = (line, msg, hl, tags) => snap(hl || {}, line, msg, tags);
@@ -431,14 +536,32 @@
         c.compare = (i, j, line, msg, tags) => { c.count([i, j], line, msg, tags); return a[i] - a[j]; };
         c.swap = (i, j, line, msg, tags) => {
             [a[i], a[j]] = [a[j], a[i]]; c.swp++;
+            const pi = occ[i], pj = occ[j];
+            place(pi, j); place(pj, i);
             snap({ act: [i, j] }, line, msg, tags);
         };
-        c.write = (i, v, line, msg, tags) => { a[i] = v; c.swp++; snap({ act: [i] }, line, msg, tags); };
+        c.write = (i, v, line, msg, tags) => {
+            a[i] = v; c.swp++;
+            const old = occ[i], p = whoWrites(i, v);
+            if (p !== old) {
+                if (!held[p] && occ[px[p]] === p) occ[px[p]] = -1;
+                if (old >= 0) { held[old] = true; px[old] = i; }
+                place(p, i);
+            }
+            snap({ act: [i] }, line, msg, tags);
+        };
         c.mark = (...idx) => idx.forEach((i) => { sorted[i] = true; });
 
         snap({}, -1, `${algo.name}을(를) 시작할 준비가 됐어요. ▶ 재생 또는 "다음" 버튼을 눌러 보세요.`);
         algo.run(c);
         sorted.fill(true);
+        // 남은 빈자리에는 빼 둔 사람을 돌려놓는다.
+        for (let i = 0; i < n; i++) {
+            if (occ[i] >= 0) continue;
+            let q = -1;
+            for (let k = 0; k < n; k++) if (held[k] && (val[k] === a[i] || q < 0)) { q = k; if (val[k] === a[i]) break; }
+            if (q >= 0) place(q, i);
+        }
         c.range = null; c.pivot = -1;
         snap({}, -1, '✓ 정렬 완료! 모든 원소가 제자리에 확정되었습니다.');
         return steps;
@@ -881,13 +1004,19 @@
      * 6. 렌더링
      * ===================================================================== */
     const el = {
-        tabs: $('tabs'), bars: $('bars'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
+        tabs: $('tabs'), bars: $('bars'), people: $('people'), chart: $('chart'), tags: $('tags'), aux: $('auxWrap'), auxBars: $('aux'),
         msg: $('msg'), play: $('playBtn'), scrub: $('scrub'), speed: $('speed'), speedVal: $('speedVal'),
         size: $('size'), sizeVal: $('sizeVal'), pattern: $('pattern'), custom: $('custom'), err: $('err'),
         sCmp: $('sCmp'), sSwp: $('sSwp'), sStep: $('sStep'), sState: $('sState'), legPivot: $('legPivot'),
         infoMain: $('infoMain'), infoSide: $('infoSide'), cmpBody: $('cmpBody'), meters: $('meters'), measureNote: $('measureNote')
     };
     let barEls = [], tagEls = [], auxEls = [], maxV = 1, showVal = true;
+    let personEls = [], pitch = 0, personW = 0;
+    const PEOPLE_H = 240, LIFT = 64;
+    const SKIN = ['#f6d3b3', '#e8b98e', '#c98f62', '#8d5a3b', '#f1c9a5'];
+    const HAIR = ['#2b1d14', '#6b4226', '#c9a227', '#a33b2a', '#1d1d1d', '#8a8a8a'];
+    let mode = 'bars';
+    try { if (localStorage.getItem('vis-mode') === 'people') mode = 'people'; } catch (e) { /* 저장소 접근 불가 시 기본값 */ }
 
     function buildStage() {
         const n = state.data.length;
@@ -898,27 +1027,47 @@
         showVal = per >= 24;
         const showTags = per >= 18;
         [el.bars, el.tags, el.auxBars].forEach((e) => e.style.setProperty('--gap', gap + 'px'));
-        el.bars.innerHTML = ''; el.tags.innerHTML = ''; el.auxBars.innerHTML = '';
-        barEls = []; tagEls = []; auxEls = [];
+        const isPeople = mode === 'people';
+        el.bars.hidden = isPeople; el.people.hidden = !isPeople;
+        el.chart.classList.toggle('mode-people', isPeople);
+        el.bars.innerHTML = ''; el.tags.innerHTML = ''; el.auxBars.innerHTML = ''; el.people.innerHTML = '';
+        barEls = []; tagEls = []; auxEls = []; personEls = [];
+        pitch = per + gap; personW = per;
         for (let i = 0; i < n; i++) {
-            const b = document.createElement('div');
-            b.className = 'bar';
-            const v = document.createElement('span');
-            v.className = 'v';
-            b.appendChild(v);
-            el.bars.appendChild(b);
-            barEls.push(b);
+            if (isPeople) {
+                const p = document.createElement('div');
+                p.className = 'p';
+                p.style.width = per + 'px';
+                p.style.setProperty('--i', i);
+                p.style.setProperty('--shirt', `hsl(${Math.round((state.data[i] / maxV) * 300)} 70% 55%)`);
+                p.style.setProperty('--skin', SKIN[i % SKIN.length]);
+                p.style.setProperty('--hair', HAIR[(i * 7 + 3) % HAIR.length]);
+                p.innerHTML = '<div class="fig"><span class="v"></span><i class="head"></i><i class="torso"><i class="arm l"></i><i class="arm r"></i></i><div class="legs"><i class="leg l"></i><i class="leg r"></i></div></div>';
+                p._slot = null; p._held = null;
+                el.people.appendChild(p);
+                personEls.push(p);
+            } else {
+                const b = document.createElement('div');
+                b.className = 'bar';
+                const v = document.createElement('span');
+                v.className = 'v';
+                b.appendChild(v);
+                el.bars.appendChild(b);
+                barEls.push(b);
+            }
             const t = document.createElement('div');
             t.className = 't';
             el.tags.appendChild(t);
             tagEls.push(t);
-            const x = document.createElement('div');
-            x.className = 'bar';
-            el.auxBars.appendChild(x);
-            auxEls.push(x);
+            if (!isPeople) {
+                const x = document.createElement('div');
+                x.className = 'bar';
+                el.auxBars.appendChild(x);
+                auxEls.push(x);
+            }
         }
         el.tags.style.display = showTags ? 'flex' : 'none';
-        el.aux.hidden = !state.algo.usesAux;
+        el.aux.hidden = !state.algo.usesAux || isPeople;
         el.legPivot.style.display = state.algo.usesPivot ? '' : 'none';
     }
 
@@ -935,14 +1084,15 @@
         if (s.pivot >= 0) cls[s.pivot] = 'pivot';
         s.hl.act.forEach((i) => { cls[i] = 'act'; });
 
-        for (let i = 0; i < n; i++) {
+        if (mode === 'people') renderPeople(s, cls);
+        else for (let i = 0; i < n; i++) {
             const b = barEls[i];
             b.style.height = Math.max(2, (s.arr[i] / maxV) * 100) + '%';
             b.className = 'bar ' + cls[i];
             if (showVal) b.firstChild.textContent = s.arr[i];
-            tagEls[i].textContent = s.tags[i] || '';
         }
-        if (s.aux) {
+        for (let i = 0; i < n; i++) tagEls[i].textContent = s.tags[i] || '';
+        if (s.aux && mode === 'bars') {
             for (let i = 0; i < n; i++) {
                 const v = s.aux[i];
                 auxEls[i].style.height = v == null ? '0%' : Math.max(3, (v / maxV) * 100) + '%';
@@ -962,6 +1112,40 @@
         $('firstBtn').disabled = $('prevBtn').disabled = state.pos === 0;
         $('lastBtn').disabled = $('nextBtn').disabled = state.pos === last;
         el.play.textContent = state.playing ? '⏸ 일시정지' : state.pos === last ? '↻ 다시 재생' : '▶ 재생';
+    }
+
+    // 캐릭터 모드: 사람마다 자리(px)가 바뀌면 그 방향으로 춤추며 이동한다.
+    function renderPeople(s, cls) {
+        const n = s.arr.length;
+        const slotCls = cls.slice();
+        const hs = new Array(n).fill(false);
+        for (let p = 0; p < n; p++) if (s.held[p]) hs[p] = true;
+        const cheer = state.pos === state.steps.length - 1 && n > 1;
+        el.people.classList.toggle('cheer', cheer);
+        for (let p = 0; p < n; p++) {
+            const e = personEls[p], slot = s.px[p], held = s.held[p];
+            const val = state.data[p], h = Math.max(40, (val / maxV) * PEOPLE_H);
+            if (e._h !== h) { e.style.height = h + 'px'; e._h = h; }
+            e.style.transform = `translate(${slot * pitch}px, ${held ? -LIFT : 0}px)`;
+            const base = 'p ' + (slotCls[slot] || '') + (held ? ' held' : '');
+            if (e._slot !== null && (e._slot !== slot || e._held !== held) && !cheer) {
+                // 자리가 바뀐 사람: 춤 애니메이션을 처음부터 다시 시작한다.
+                e.className = base;
+                void e.offsetWidth;
+                e._d = ' d' + ((p + state.pos) % 3);
+            }
+            e.className = base + (e._d || '');
+            e._slot = slot; e._held = held;
+            if (showVal) e.firstChild.firstChild.textContent = val;
+        }
+    }
+
+    function setMode(m) {
+        mode = m;
+        try { localStorage.setItem('vis-mode', m); } catch (e) { /* 무시 */ }
+        $('modeBars').setAttribute('aria-pressed', String(m === 'bars'));
+        $('modePeople').setAttribute('aria-pressed', String(m === 'people'));
+        if (state.steps.length) { buildStage(); render(); }
     }
 
     function renderTabs() {
@@ -1103,6 +1287,7 @@
         state.rate = 2 * Math.pow(2, v / 12);
         el.speedVal.textContent = `${Math.round(state.rate)}단계/초`;
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        document.documentElement.style.setProperty('--mdur', reduce ? '0ms' : Math.max(120, Math.min(450, Math.round(1000 / state.rate))) + 'ms');
         document.documentElement.style.setProperty('--dur', reduce ? '0ms' : Math.min(180, Math.round(700 / state.rate)) + 'ms');
     }
 
@@ -1122,6 +1307,8 @@
     $('lastBtn').addEventListener('click', () => { pause(); go(state.steps.length - 1); });
     el.scrub.addEventListener('input', () => { pause(); go(Number(el.scrub.value)); });
     el.speed.addEventListener('input', applySpeed);
+    $('modeBars').addEventListener('click', () => setMode('bars'));
+    $('modePeople').addEventListener('click', () => setMode('people'));
 
     const regenerate = () => setData(generate(el.pattern.value, Number(el.size.value)), el.pattern.value);
     el.pattern.addEventListener('change', regenerate);
@@ -1160,6 +1347,8 @@
     // 테스트/디버깅용으로 기록기만 노출한다.
     window.__sorting = { ALGOS, record };
 
+    $('modeBars').setAttribute('aria-pressed', String(mode === 'bars'));
+    $('modePeople').setAttribute('aria-pressed', String(mode === 'people'));
     applySpeed();
     const initial = ALGOS.find((a) => a.id === location.hash.slice(1));
     if (initial) state.algo = initial;
